@@ -47,7 +47,7 @@ chmod +x newrelic-endpoint-test.sh chmod +x newrelic-squid-proxy.sh
 Sekarang, Anda dapat menjalankan script untuk menguji endpoint dan menginstal Squid Proxy.
 1. **Untuk menguji endpoint New Relic**:
 ```bash
-./newrelic-endpoint-test.sh`
+./newrelic-endpoint-test.sh
 ```
 
 2. **Untuk menginstal Squid Proxy**:
