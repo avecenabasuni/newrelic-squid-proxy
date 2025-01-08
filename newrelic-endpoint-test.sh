@@ -9,6 +9,7 @@
 
 # List of New Relic endpoints to test
 endpoints=(
+  "https://newrelic.com"
   "https://collector.newrelic.com"
   "https://aws-api.newrelic.com"
   "https://cloud-collector.newrelic.com"
