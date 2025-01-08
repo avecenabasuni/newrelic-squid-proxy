@@ -39,7 +39,10 @@ wget https://raw.githubusercontent.com/avecenabasuni/newrelic-squid-proxy/refs/h
 ### Step 2: Beri Izin Eksekusi pada Script
 Setelah script diunduh, Anda perlu memberikan izin agar script dapat dieksekusi. Jalankan perintah berikut:
 ```bash
-chmod +x newrelic-endpoint-test.sh chmod +x newrelic-squid-proxy.sh
+chmod +x newrelic-endpoint-test.sh
+```
+```bash
+chmod +x newrelic-squid-proxy.sh
 ```
 
 ### Step 3: Jalankan Script
