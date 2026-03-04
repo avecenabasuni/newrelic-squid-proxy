@@ -18,6 +18,7 @@ ssl_bump_key_path: ""
 ssl_bump_cert_dest: "/etc/squid/ssl_cert/myCA.crt"
 ssl_bump_key_dest: "/etc/squid/ssl_cert/myCA.key"
 ssl_bump_db_path: "/var/lib/squid/ssl_db"
+ssl_bump_auto_generate: false
 
 # ─── Basic Auth ────────────────────────────────
 basic_auth_enabled: false

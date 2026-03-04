@@ -307,6 +307,7 @@ step "Configuring Squid Proxy"
 SQUID_PORT=""
 SSL_BUMP_INPUT=""
 SSL_BUMP_ENABLED="false"
+SSL_BUMP_AUTO_GENERATE="false"
 SSL_BUMP_CERT_PATH=""
 SSL_BUMP_KEY_PATH=""
 AUTH_INPUT=""
@@ -334,18 +335,30 @@ read -r SSL_BUMP_INPUT < /dev/tty
 if [[ "$SSL_BUMP_INPUT" =~ ^[Yy]$ ]]; then
     SSL_BUMP_ENABLED="true"
 
-    prompt "  Path to CA certificate: "
-    read -r SSL_BUMP_CERT_PATH < /dev/tty
-    if [ ! -f "$SSL_BUMP_CERT_PATH" ]; then
-        log_error "CA certificate not found: $SSL_BUMP_CERT_PATH"
-        exit 1
-    fi
+    echo ""
+    echo -e "  ${DIM}Select CA Certificate Strategy:${RESET}"
+    echo -e "    1) Auto-generate a new self-signed Root CA (with auto-rotation)"
+    echo -e "    2) Provide an existing CA certificate and key"
+    prompt "  ${BOLD}Strategy${RESET} ${GRAY}[1/2]${RESET}: "
+    read -r CA_STRATEGY < /dev/tty
 
-    prompt "  Path to CA private key: "
-    read -r SSL_BUMP_KEY_PATH < /dev/tty
-    if [ ! -f "$SSL_BUMP_KEY_PATH" ]; then
-        log_error "CA private key not found: $SSL_BUMP_KEY_PATH"
-        exit 1
+    if [[ "$CA_STRATEGY" == "1" ]]; then
+        SSL_BUMP_AUTO_GENERATE="true"
+        echo -e "  ${GRAY}  ${DIM}A new Root CA will be auto-generated at /etc/squid/ssl_cert/myCA.crt${RESET}"
+    else
+        prompt "  Path to CA certificate: "
+        read -r SSL_BUMP_CERT_PATH < /dev/tty
+        if [ ! -f "$SSL_BUMP_CERT_PATH" ]; then
+            log_error "CA certificate not found: $SSL_BUMP_CERT_PATH"
+            exit 1
+        fi
+
+        prompt "  Path to CA private key: "
+        read -r SSL_BUMP_KEY_PATH < /dev/tty
+        if [ ! -f "$SSL_BUMP_KEY_PATH" ]; then
+            log_error "CA private key not found: $SSL_BUMP_KEY_PATH"
+            exit 1
+        fi
     fi
 fi
 
@@ -403,8 +416,12 @@ echo -e "  ${DOT}  Proxy Port      ${BOLD}${SQUID_PORT}${RESET}"
 
 if [ "$SSL_BUMP_ENABLED" = "true" ]; then
     echo -e "  ${DOT}  SSL Bump        ${GREEN}${BOLD}ENABLED${RESET}"
-    echo -e "  ${DOT}    CA Cert       ${DIM}${SSL_BUMP_CERT_PATH}${RESET}"
-    echo -e "  ${DOT}    CA Key        ${DIM}${SSL_BUMP_KEY_PATH}${RESET}"
+    if [ "$SSL_BUMP_AUTO_GENERATE" = "true" ]; then
+        echo -e "  ${DOT}    CA Strategy   ${DIM}Auto-generation (Daily Rotation)${RESET}"
+    else
+        echo -e "  ${DOT}    CA Cert       ${DIM}${SSL_BUMP_CERT_PATH}${RESET}"
+        echo -e "  ${DOT}    CA Key        ${DIM}${SSL_BUMP_KEY_PATH}${RESET}"
+    fi
 else
     echo -e "  ${DOT}  SSL Bump        ${DIM}disabled${RESET}"
 fi
@@ -457,6 +474,7 @@ cat <<EOF > /tmp/nr-squid-vars.json
 {
   "squid_port": ${SQUID_PORT},
   "ssl_bump_enabled": ${SSL_BUMP_ENABLED},
+  "ssl_bump_auto_generate": ${SSL_BUMP_AUTO_GENERATE},
   "ssl_bump_cert_path": "${SSL_BUMP_CERT_PATH}",
   "ssl_bump_key_path": "${SSL_BUMP_KEY_PATH}",
   "basic_auth_enabled": ${BASIC_AUTH_ENABLED},

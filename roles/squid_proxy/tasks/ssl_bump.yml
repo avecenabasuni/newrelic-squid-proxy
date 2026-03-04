@@ -9,7 +9,37 @@
     group: "{{ squid_group }}"
     mode: "0700"
 
-- name: Copy CA certificate
+- name: Check if CA certificate exists
+  ansible.builtin.stat:
+    path: "{{ ssl_bump_cert_dest }}"
+  register: ca_cert_stat
+
+- name: Auto-generate CA certificate and key
+  ansible.builtin.command:
+    cmd: >
+      openssl req -new -newkey rsa:2048 -days 365 -nodes -x509
+      -subj "/C=US/ST=State/L=City/O=New Relic Squid Proxy/CN=NewRelic-Squid-Proxy-CA"
+      -keyout {{ ssl_bump_key_dest }} -out {{ ssl_bump_cert_dest }}
+  when: ssl_bump_auto_generate and not ca_cert_stat.stat.exists
+  notify: restart squid
+
+- name: Ensure correct permissions for auto-generated CA cert
+  ansible.builtin.file:
+    path: "{{ ssl_bump_cert_dest }}"
+    owner: "{{ squid_user }}"
+    group: "{{ squid_group }}"
+    mode: "0644"
+  when: ssl_bump_auto_generate
+
+- name: Ensure correct permissions for auto-generated CA key
+  ansible.builtin.file:
+    path: "{{ ssl_bump_key_dest }}"
+    owner: "{{ squid_user }}"
+    group: "{{ squid_group }}"
+    mode: "0600"
+  when: ssl_bump_auto_generate
+
+- name: Copy CA certificate (Existing CA)
   ansible.builtin.copy:
     src: "{{ ssl_bump_cert_path }}"
     dest: "{{ ssl_bump_cert_dest }}"
@@ -18,8 +48,9 @@
     mode: "0644"
     remote_src: true
   notify: restart squid
+  when: not ssl_bump_auto_generate
 
-- name: Copy CA private key
+- name: Copy CA private key (Existing CA)
   ansible.builtin.copy:
     src: "{{ ssl_bump_key_path }}"
     dest: "{{ ssl_bump_key_dest }}"
@@ -28,6 +59,7 @@
     mode: "0600"
     remote_src: true
   notify: restart squid
+  when: not ssl_bump_auto_generate
 
 - name: Validate CA certificate format
   ansible.builtin.command:
@@ -51,3 +83,24 @@
     owner: "{{ squid_user }}"
     group: "{{ squid_group }}"
     recurse: true
+
+- name: Deploy CA rotation script for auto-generated CAs
+  ansible.builtin.template:
+    src: rotate-squid-ca.sh.j2
+    dest: /usr/local/bin/rotate-squid-ca.sh
+    mode: "0755"
+  when: ssl_bump_auto_generate
+
+- name: Setup Cron job for CA rotation
+  ansible.builtin.cron:
+    name: "Rotate Squid CA"
+    job: "/usr/local/bin/rotate-squid-ca.sh >> /var/log/squid/ca-rotation.log 2>&1"
+    minute: "0"
+    hour: "3"
+  when: ssl_bump_auto_generate
+
+- name: Remove CA rotation cron if auto-generate is disabled
+  ansible.builtin.cron:
+    name: "Rotate Squid CA"
+    state: absent
+  when: not ssl_bump_auto_generate
