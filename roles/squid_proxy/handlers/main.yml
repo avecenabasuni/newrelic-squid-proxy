@@ -1,0 +1,14 @@
+---
+# Handlers for squid_proxy role
+
+- name: Validate squid config
+  ansible.builtin.command:
+    cmd: "squid -k parse"
+  changed_when: false
+  listen: "restart squid"
+
+- name: Restart squid
+  ansible.builtin.service:
+    name: "{{ squid_service_name }}"
+    state: restarted
+  listen: "restart squid"

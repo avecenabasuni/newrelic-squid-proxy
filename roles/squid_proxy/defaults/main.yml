@@ -1,0 +1,35 @@
+---
+# ─── Network ──────────────────────────────────
+squid_port: 3128
+squid_localnet:
+  - "10.0.0.0/8"
+  - "172.16.0.0/12"
+  - "192.168.0.0/16"
+
+# ─── SSL Bump ─────────────────────────────────
+ssl_bump_enabled: false
+ssl_bump_port: 3129
+ssl_bump_cert_path: ""
+ssl_bump_key_path: ""
+ssl_bump_cert_dest: "/etc/squid/ssl_cert/myCA.crt"
+ssl_bump_key_dest: "/etc/squid/ssl_cert/myCA.key"
+ssl_bump_db_path: "/var/lib/squid/ssl_db"
+
+# ─── Basic Auth ────────────────────────────────
+basic_auth_enabled: false
+basic_auth_username: ""
+basic_auth_password: ""
+basic_auth_password_file: "/etc/squid/passwords"
+basic_auth_realm: "Squid Proxy Authentication"
+
+# ─── Logging ───────────────────────────────────
+squid_access_log: "/var/log/squid/access.log"
+squid_cache_log: "/var/log/squid/cache.log"
+squid_logfile_rotate: 10
+
+# ─── Cache ─────────────────────────────────────
+squid_cache_mem: "256 MB"
+squid_max_object_size_in_memory: "512 KB"
+
+# ─── Privacy ───────────────────────────────────
+squid_forwarded_for: "off"

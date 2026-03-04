@@ -1,0 +1,150 @@
+###############################################################################
+# Squid Proxy for New Relic
+# Managed by Ansible — DO NOT EDIT MANUALLY
+# Template: squid.conf.j2
+###############################################################################
+
+##############################
+# [1] DEFINISI JARINGAN/PORT #
+##############################
+
+# Jaringan internal (RFC1918) yang boleh memakai proxy
+{% for subnet in squid_localnet %}
+acl localnet src {{ subnet }}
+{% endfor %}
+
+# Localhost (server proxy itu sendiri)
+acl localhost src 127.0.0.1/32 ::1
+
+# Port aman
+acl SSL_ports port 443
+acl Safe_ports port 80
+acl Safe_ports port 443
+acl Safe_ports port 1025-65535
+
+#####################################
+# [2] DAFTAR DOMAIN YANG DIIZINKAN  #
+#####################################
+
+acl allowed_domains dstdomain \
+{% for domain in allowed_domains %}
+    {{ domain }}{{ " \\" if not loop.last else "" }}
+{% endfor %}
+
+{% if ssl_bump_enabled | bool %}
+# ACL berbasis SNI untuk SSL Bump (khusus traffic ke New Relic)
+acl newrelic_sni ssl::server_name \
+{% for domain in newrelic_domains %}
+    {{ domain }}{{ " \\" if not loop.last else "" }}
+{% endfor %}
+
+{% endif %}
+#########################################
+# [3] FILTER SAFETY & BASIC PROTECTION  #
+#########################################
+
+# Tolak request ke port yang tidak aman + CONNECT selain 443
+http_access deny !Safe_ports
+http_access deny CONNECT !SSL_ports
+
+# Proteksi service lokal & link-local pada host proxy
+http_access deny to_localhost
+http_access deny to_linklocal
+
+##############################################
+# [4] KEBIJAKAN AKSES (URUTAN PENTING/FINAL) #
+##############################################
+
+{% if basic_auth_enabled | bool %}
+# Basic Auth — wajib credential untuk akses proxy
+auth_param basic program {{ squid_ncsa_auth_path }} {{ basic_auth_password_file }}
+auth_param basic children 5
+auth_param basic realm {{ basic_auth_realm }}
+auth_param basic credentialsttl 2 hours
+acl authenticated_users proxy_auth REQUIRED
+
+# IZINKAN: user ter-autentikasi dari localhost ke domain yang diizinkan
+http_access allow authenticated_users localhost allowed_domains
+
+# IZINKAN: user ter-autentikasi dari localnet ke domain yang diizinkan
+http_access allow authenticated_users localnet allowed_domains
+{% else %}
+# IZINKAN: localhost (server proxy) ke domain yang diizinkan
+http_access allow localhost allowed_domains
+
+# IZINKAN: klien dari localnet menuju domain yang diizinkan
+http_access allow localnet allowed_domains
+{% endif %}
+
+# TOLAK: semua selain di atas
+http_access deny all
+
+#####################
+# [5] LISTENING PORT
+#####################
+
+http_port {{ squid_port }}
+
+{% if ssl_bump_enabled | bool %}
+# Port khusus HTTPS + SSL Bump (MITM untuk New Relic)
+https_port {{ ssl_bump_port }} ssl-bump \
+    generate-host-certificates=on \
+    cert={{ ssl_bump_cert_dest }} \
+    key={{ ssl_bump_key_dest }}
+
+###############################################
+# [6] RULE SSL BUMP (TLS INTERCEPTION)
+###############################################
+
+acl step1 at_step SslBump1
+acl step2 at_step SslBump2
+acl step3 at_step SslBump3
+
+# Peek SNI, bump hanya untuk domain New Relic, lainnya di-splice (no MITM)
+ssl_bump peek step1 newrelic_sni
+ssl_bump bump step2 newrelic_sni
+ssl_bump splice all
+
+# Paksa outbound TLS dari Squid pakai TLS 1.2+
+tls_outgoing_options options=NO_SSLv3:NO_TLSv1:NO_TLSv1_1
+
+sslcrtd_program {{ squid_certgen_path }} -s {{ ssl_bump_db_path }} -M 4MB
+sslcrtd_children 8 startup=1 idle=1
+
+{% endif %}
+########################
+# [7] LOGGING & ROTATION
+########################
+
+access_log {{ squid_access_log }} squid
+cache_log  {{ squid_cache_log }}
+logfile_rotate {{ squid_logfile_rotate }}
+
+#########################
+# [8] CACHING & TUNING  #
+#########################
+
+refresh_pattern -i \.(jpg|jpeg|png|gif|ico|svg)$ 10080 90% 43200
+refresh_pattern -i \.(js|css|html|htm)$          1440  90% 40320
+refresh_pattern -i \.(zip|tar|gz|bz2|7z)$        10080  90% 43200
+refresh_pattern . 0 20% 4320
+
+cache_mem {{ squid_cache_mem }}
+maximum_object_size_in_memory {{ squid_max_object_size_in_memory }}
+
+# Jangan cache konten dinamis
+acl QUERY urlpath_regex cgi-bin \?
+cache deny QUERY
+
+######################
+# [9] PRIVACY SETTINGS
+######################
+
+forwarded_for {{ squid_forwarded_for }}
+request_header_access X-Forwarded-For deny all
+
+######################
+# [10] CORE DUMP & PATH
+######################
+
+coredump_dir /var/spool/squid

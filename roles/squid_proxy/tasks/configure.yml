@@ -1,0 +1,36 @@
+---
+# Configure Squid — template config and create required directories
+
+- name: Ensure Squid config directory exists
+  ansible.builtin.file:
+    path: /etc/squid
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Ensure Squid log directory exists
+  ansible.builtin.file:
+    path: /var/log/squid
+    state: directory
+    owner: "{{ squid_user }}"
+    group: "{{ squid_group }}"
+    mode: "0755"
+
+- name: Ensure Squid spool directory exists
+  ansible.builtin.file:
+    path: /var/spool/squid
+    state: directory
+    owner: "{{ squid_user }}"
+    group: "{{ squid_group }}"
+    mode: "0755"
+
+- name: Deploy Squid configuration from template
+  ansible.builtin.template:
+    src: squid.conf.j2
+    dest: /etc/squid/squid.conf
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "squid -k parse -f %s"
+  notify: restart squid

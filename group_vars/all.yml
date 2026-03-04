@@ -1,0 +1,4 @@
+---
+# Group variables for all hosts
+# All defaults are defined in roles/squid_proxy/defaults/main.yml
+# Override values here or via --extra-vars

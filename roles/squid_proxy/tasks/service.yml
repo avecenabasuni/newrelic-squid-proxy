@@ -1,0 +1,23 @@
+---
+# Service management — enable and start Squid
+
+- name: Enable Squid service at boot
+  ansible.builtin.service:
+    name: "{{ squid_service_name }}"
+    enabled: true
+
+- name: Ensure Squid service is started
+  ansible.builtin.service:
+    name: "{{ squid_service_name }}"
+    state: started
+
+- name: Wait for Squid port to be available
+  ansible.builtin.wait_for:
+    port: "{{ squid_port }}"
+    timeout: 30
+
+- name: Wait for SSL Bump port to be available
+  ansible.builtin.wait_for:
+    port: "{{ ssl_bump_port }}"
+    timeout: 30
+  when: ssl_bump_enabled | bool

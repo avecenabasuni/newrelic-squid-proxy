@@ -1,0 +1,53 @@
+---
+# SSL Bump setup — only runs when ssl_bump_enabled is true
+
+- name: Ensure SSL cert directory exists
+  ansible.builtin.file:
+    path: /etc/squid/ssl_cert
+    state: directory
+    owner: "{{ squid_user }}"
+    group: "{{ squid_group }}"
+    mode: "0700"
+
+- name: Copy CA certificate
+  ansible.builtin.copy:
+    src: "{{ ssl_bump_cert_path }}"
+    dest: "{{ ssl_bump_cert_dest }}"
+    owner: "{{ squid_user }}"
+    group: "{{ squid_group }}"
+    mode: "0644"
+    remote_src: true
+  notify: restart squid
+
+- name: Copy CA private key
+  ansible.builtin.copy:
+    src: "{{ ssl_bump_key_path }}"
+    dest: "{{ ssl_bump_key_dest }}"
+    owner: "{{ squid_user }}"
+    group: "{{ squid_group }}"
+    mode: "0600"
+    remote_src: true
+  notify: restart squid
+
+- name: Validate CA certificate format
+  ansible.builtin.command:
+    cmd: "openssl x509 -in {{ ssl_bump_cert_dest }} -noout"
+  changed_when: false
+
+- name: Check if SSL DB already exists
+  ansible.builtin.stat:
+    path: "{{ ssl_bump_db_path }}"
+  register: ssl_db_stat
+
+- name: Initialize SSL certificate database
+  ansible.builtin.command:
+    cmd: "{{ squid_certgen_path }} -c -s {{ ssl_bump_db_path }} -M 4MB"
+  when: not ssl_db_stat.stat.exists
+
+- name: Set SSL DB ownership
+  ansible.builtin.file:
+    path: "{{ ssl_bump_db_path }}"
+    state: directory
+    owner: "{{ squid_user }}"
+    group: "{{ squid_group }}"
+    recurse: true

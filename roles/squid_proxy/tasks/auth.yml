@@ -1,0 +1,33 @@
+---
+# Basic Auth setup — only runs when basic_auth_enabled is true
+
+- name: Ensure password file exists
+  ansible.builtin.file:
+    path: "{{ basic_auth_password_file }}"
+    state: touch
+    owner: "{{ squid_user }}"
+    group: "{{ squid_group }}"
+    mode: "0640"
+    modification_time: preserve
+    access_time: preserve
+
+- name: Check if user already exists in password file
+  ansible.builtin.command:
+    cmd: "grep -q '^{{ basic_auth_username }}:' {{ basic_auth_password_file }}"
+  register: user_exists
+  changed_when: false
+  failed_when: false
+
+- name: Create htpasswd entry for user
+  ansible.builtin.command:
+    cmd: "htpasswd -cb {{ basic_auth_password_file }} {{ basic_auth_username }} {{ basic_auth_password }}"
+  when: user_exists.rc != 0
+  notify: restart squid
+  no_log: true
+
+- name: Update htpasswd entry for user
+  ansible.builtin.command:
+    cmd: "htpasswd -b {{ basic_auth_password_file }} {{ basic_auth_username }} {{ basic_auth_password }}"
+  when: user_exists.rc == 0
+  notify: restart squid
+  no_log: true

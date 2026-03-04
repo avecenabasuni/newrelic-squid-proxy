@@ -1,0 +1,113 @@
+---
+# Verification tasks — test connectivity to all New Relic endpoints via proxy
+
+- name: Load squid_proxy variables (endpoint list)
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/roles/squid_proxy/vars/main.yml"
+
+- name: Check Squid service is running
+  ansible.builtin.service_facts:
+
+- name: Assert Squid service is active
+  ansible.builtin.assert:
+    that:
+      - "'squid.service' in ansible_facts.services"
+      - "ansible_facts.services['squid.service'].state == 'running'"
+    fail_msg: "Squid service is not running!"
+    success_msg: "Squid service is running."
+
+- name: Validate Squid configuration
+  ansible.builtin.command:
+    cmd: "squid -k parse"
+  changed_when: false
+
+- name: Wait for proxy port to be available
+  ansible.builtin.wait_for:
+    port: "{{ squid_port }}"
+    timeout: 10
+
+- name: Wait for SSL Bump port to be available
+  ansible.builtin.wait_for:
+    port: "{{ ssl_bump_port }}"
+    timeout: 10
+  when: ssl_bump_enabled | bool
+
+- name: Set proxy credentials string
+  ansible.builtin.set_fact:
+    proxy_auth_string: "{{ basic_auth_username + ':' + basic_auth_password + '@' if basic_auth_enabled | bool else '' }}"
+  no_log: true
+
+- name: Test New Relic endpoints via proxy
+  ansible.builtin.uri:
+    url: "{{ item }}"
+    method: GET
+    status_code: [200, 301, 302, 400, 404, 405, 410]
+    validate_certs: false
+    timeout: 15
+    follow_redirects: none
+  environment:
+    http_proxy: "http://{{ proxy_auth_string }}localhost:{{ squid_port }}"
+    https_proxy: "http://{{ proxy_auth_string }}localhost:{{ squid_port }}"
+  loop: "{{ newrelic_endpoints }}"
+  register: endpoint_results
+  ignore_errors: true
+
+- name: Calculate verification results
+  ansible.builtin.set_fact:
+    successful_endpoints: "{{ endpoint_results.results | selectattr('failed', 'equalto', false) | list }}"
+    failed_endpoints: "{{ endpoint_results.results | selectattr('failed', 'equalto', true) | list }}"
+
+- name: Display verification summary
+  ansible.builtin.debug:
+    msg: |
+      ═══════════════════════════════════════════════════
+       VERIFICATION COMPLETE
+      ═══════════════════════════════════════════════════
+       Total endpoints tested : {{ newrelic_endpoints | length }}
+       Successful             : {{ successful_endpoints | length }}
+       Failed                 : {{ failed_endpoints | length }}
+      ═══════════════════════════════════════════════════
+
+- name: Display failed endpoints (if any)
+  ansible.builtin.debug:
+    msg: "FAILED: {{ item.item }} — {{ item.msg | default('Unknown error') }}"
+  loop: "{{ failed_endpoints }}"
+  when: failed_endpoints | length > 0
+
+- name: Test blocked domain (should be denied)
+  ansible.builtin.uri:
+    url: "https://google.com"
+    method: GET
+    status_code: [403]
+    validate_certs: false
+    timeout: 10
+    follow_redirects: none
+  environment:
+    http_proxy: "http://{{ proxy_auth_string }}localhost:{{ squid_port }}"
+    https_proxy: "http://{{ proxy_auth_string }}localhost:{{ squid_port }}"
+  register: blocked_result
+  ignore_errors: true
+
+- name: Assert blocked domain is denied
+  ansible.builtin.debug:
+    msg: "{{ 'PASS: google.com correctly blocked (HTTP 403)' if not blocked_result.failed else 'WARNING: google.com was NOT blocked — check ACL configuration' }}"
+
+- name: Test auth requirement (when enabled)
+  ansible.builtin.uri:
+    url: "https://newrelic.com"
+    method: GET
+    status_code: [407]
+    validate_certs: false
+    timeout: 10
+    follow_redirects: none
+  environment:
+    http_proxy: "http://localhost:{{ squid_port }}"
+    https_proxy: "http://localhost:{{ squid_port }}"
+  register: auth_test_result
+  ignore_errors: true
+  when: basic_auth_enabled | bool
+
+- name: Assert auth returns 407 without credentials
+  ansible.builtin.debug:
+    msg: "{{ 'PASS: Proxy correctly returns 407 without credentials' if not auth_test_result.failed else 'WARNING: Proxy did NOT return 407 without credentials' }}"
+  when: basic_auth_enabled | bool

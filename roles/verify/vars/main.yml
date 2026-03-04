@@ -1,0 +1,3 @@
+---
+# Verification endpoints — imported from squid_proxy role vars
+# This avoids duplication; the verify playbook includes squid_proxy vars via include_vars

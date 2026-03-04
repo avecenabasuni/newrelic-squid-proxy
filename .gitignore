@@ -1,0 +1,32 @@
+# Backup files
+*.bak
+*.orig
+*.swp
+*~
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.sublime-*
+
+# SSL certificates (sensitive)
+ssl_cert/
+*.crt
+*.key
+*.pem
+
+# Password files (sensitive)
+passwords
+
+# Ansible
+*.retry
+
+# Temp vars file
+/tmp/nr-squid-vars.json

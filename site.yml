@@ -1,0 +1,11 @@
+---
+# site.yml — Main playbook: install & configure Squid Proxy for New Relic
+#
+# Usage:
+#   ansible-playbook site.yml --extra-vars @/tmp/nr-squid-vars.json
+
+- name: Install and configure Squid Proxy for New Relic
+  hosts: local
+  become: true
+  roles:
+    - squid_proxy

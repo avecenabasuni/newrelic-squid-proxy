@@ -1,0 +1,19 @@
+---
+# Install Squid and dependencies
+
+- name: Enable EPEL repository (RedHat family)
+  ansible.builtin.package:
+    name: epel-release
+    state: present
+  when: ansible_os_family == "RedHat"
+  ignore_errors: true
+
+- name: Install Squid
+  ansible.builtin.package:
+    name: "{{ squid_package_name }}"
+    state: present
+
+- name: Install auth tools
+  ansible.builtin.package:
+    name: "{{ squid_auth_package }}"
+    state: present

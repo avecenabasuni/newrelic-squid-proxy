@@ -1,0 +1,11 @@
+---
+# verify.yml — Verification playbook: test New Relic endpoint connectivity via proxy
+#
+# Usage:
+#   ansible-playbook verify.yml --extra-vars @/tmp/nr-squid-vars.json
+
+- name: Verify Squid Proxy connectivity to New Relic endpoints
+  hosts: local
+  become: true
+  roles:
+    - verify

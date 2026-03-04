@@ -1,0 +1,8 @@
+---
+squid_package_name: "squid"
+squid_auth_package: "apache2-utils"
+squid_service_name: "squid"
+squid_user: "proxy"
+squid_group: "proxy"
+squid_ncsa_auth_path: "/usr/lib/squid/basic_ncsa_auth"
+squid_certgen_path: "/usr/lib/squid/security_file_certgen"

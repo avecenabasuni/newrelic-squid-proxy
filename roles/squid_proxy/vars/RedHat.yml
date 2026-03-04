@@ -1,0 +1,8 @@
+---
+squid_package_name: "squid"
+squid_auth_package: "httpd-tools"
+squid_service_name: "squid"
+squid_user: "squid"
+squid_group: "squid"
+squid_ncsa_auth_path: "/usr/lib64/squid/basic_ncsa_auth"
+squid_certgen_path: "/usr/lib64/squid/security_file_certgen"
