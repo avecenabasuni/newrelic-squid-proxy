@@ -246,9 +246,21 @@ fi
 step "Preparing project files"
 
 download_repo() {
+    # Tier 0: Run from local checkout
+    if [ -f "$(pwd)/site.yml" ] && [ "$(pwd)" != "$INSTALL_DIR" ]; then
+        log_info "Local repository detected. Syncing to ${BOLD}${INSTALL_DIR}${RESET}"
+        mkdir -p "$INSTALL_DIR"
+        cp -a "$(pwd)/." "$INSTALL_DIR/"
+        return 0
+    fi
+
     # Tier 1: Check if already exists locally
     if [ -f "$INSTALL_DIR/site.yml" ]; then
         log_info "Using existing installation at ${BOLD}${INSTALL_DIR}${RESET}"
+        if [ -d "$INSTALL_DIR/.git" ] && command -v git &>/dev/null; then
+            echo -e "  ${ARROW} Updating existing repository via git pull..."
+            git -C "$INSTALL_DIR" pull --quiet origin "$REPO_BRANCH" || true
+        fi
         return 0
     fi
 
