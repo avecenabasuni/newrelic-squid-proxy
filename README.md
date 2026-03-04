@@ -66,7 +66,7 @@ Semua konfigurasi ditanyakan via prompt interaktif saat instalasi:
 | Parameter | Default | Deskripsi |
 | --------- | ------- | --------- |
 | Proxy Port | `3128` | Port HTTP proxy |
-| SSL Bump | `disabled` | Enable MITM interception (butuh CA cert & key) |
+| SSL Bump | `disabled` | Enable MITM interception (menyediakan CA cert eksisting atau generate auto-rotation) |
 | Basic Auth | `disabled` | Enable autentikasi proxy (butuh username & password) |
 | Cache Peer | `disabled` | Enable corporate proxy chaining (butuh host & port upstream proxy) |
 
