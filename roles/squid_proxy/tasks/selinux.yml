@@ -1,7 +1,7 @@
 ---
 # tasks/selinux.yml
-# Dipanggil eksklusif untuk RedHat-family (RHEL, CentOS, Rocky, Alma, Fedora)
-# memastikan bind port dan akses direktori berhasil jika SELinux Enforcing.
+# Called exclusively for RedHat-family (RHEL, CentOS, Rocky, Alma, Fedora)
+# ensures port binding and directory access succeed when SELinux is Enforcing.
 
 - name: Set SELinux boolean 'squid_connect_any' to allow outbound connections
   ansible.posix.seboolean:

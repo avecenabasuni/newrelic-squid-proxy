@@ -25,7 +25,7 @@ os_repo_domains:
   - ".opensuse.org"
   - ".suse.com"
 
-# Merged list untuk template
+# Merged list for template
 newrelic_domains: >-
   {%- if nr_region == 'us' -%}
     {{ newrelic_domains_us }}
@@ -37,8 +37,8 @@ newrelic_domains: >-
 
 allowed_domains: "{{ newrelic_domains + os_repo_domains }}"
 
-# ─── New Relic Endpoints (untuk verification) ──
-# Di-ping via verify.yml untuk memastikan routing sukses
+# ─── New Relic Endpoints (for verification) ──
+# Pinged via verify.yml to ensure successful routing
 newrelic_endpoints_us:
   - "https://collector.newrelic.com"
   - "https://aws-api.newrelic.com"

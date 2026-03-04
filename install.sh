@@ -505,10 +505,10 @@ fi
 # ═══════════════════════════════════════════════════════════════════════════════
 step "Installing & configuring Squid"
 
-# 6. Generate Ansible variables (JSON untuk extra-vars)
+# 6. Generate Ansible variables (JSON for extra-vars)
 echo -e "  ${ARROW} Generating configuration..."
 
-# Deteksi SELinux status (jika default enforcing di RedHat)
+# Detect SELinux status (if default enforcing on RedHat)
 SQUID_SELINUX_ENABLED="false"
 if [[ "$PKG_MANAGER" == "dnf" || "$PKG_MANAGER" == "yum" ]]; then
     if command -v getenforce >/dev/null 2>&1; then

@@ -1,21 +1,21 @@
 # Test Plan: New Relic Squid Proxy
 
-Validasi menyeluruh dari instalasi sampai teardown.
-Jalankan semua command di VM target sebagai `root`.
+Comprehensive validation from installation to teardown.
+Run all commands on the target VM as `root`.
 
 ---
 
 ## Prerequisites
 
 ```bash
-# 1. Clone repo di VM
+# 1. Clone repo on VM
 cd /root
 git clone https://github.com/avecenabasuni/newrelic-squid-proxy.git
 cd newrelic-squid-proxy
 
 # 2. Install dependencies
 apt update && apt install -y ansible yamllint shellcheck curl net-tools
-# atau RHEL:
+# or RHEL:
 # yum install -y ansible yamllint ShellCheck curl net-tools
 ```
 
@@ -30,9 +30,9 @@ cd /root/newrelic-squid-proxy
 sudo bash install.sh
 ```
 
-Jawab prompt dengan konfigurasi berikut:
+Respond to the prompts with the following configuration:
 
-| Prompt | Jawaban |
+| Prompt | Answer |
 | ------ | ------- |
 | Proxy Port | `3128` (default) |
 | NR Region | `us` |
@@ -42,21 +42,21 @@ Jawab prompt dengan konfigurasi berikut:
 | Enable NR Integration? | `y` |
 | Proceed? | `Y` |
 
-**Expected:** Ansible playbook berjalan sampai selesai tanpa error merah.
+**Expected:** Ansible playbook runs to completion without red errors.
 
 ---
 
 ## Phase 2: Automated Verification (Core Tests)
 
-Kami telah menyediakan script E2E otomatis untuk menguji konfigurasi, runtime, dan connectivity New Relic.
-Jalankan script ini:
+An automated E2E script is provided to test configuration, runtime, and New Relic connectivity.
+Run this script:
 
 ```bash
 cd /root/newrelic-squid-proxy
 sudo bash test.sh
 ```
 
-**Expected:** Script akan memvalidasi linting, runtime Squid, port binding, HTTP tunneling API, domain blocking, dan integrasi NR Infra. Semua baris harus menunjukkan `[PASS]`.
+**Expected:** The script will validate linting, Squid runtime, port binding, HTTP tunneling API, domain blocking, and NR Infra integration. All lines should show `[PASS]`.
 
 ---
 
@@ -64,45 +64,45 @@ sudo bash test.sh
 
 ### 3.1 SSL Bump (M5) - Optional
 
-Hanya jika install ulang dengan SSL Bump enabled:
+Only if re-installing with SSL Bump enabled:
 
 ```bash
 # Re-install with SSL Bump auto-generate
 sudo bash install.sh
-# Jawab Y untuk SSL Bump, pilih auto-generate
+# Answer Y for SSL Bump, choose auto-generate
 
-# Verifikasi CA cert exists
+# Verify CA cert exists
 ls -la /etc/squid/ssl_cert/proxy-ca.pem
 ls -la /etc/squid/ssl_cert/proxy-ca.key
-# Expected: file ada, permission 0644 (cert) dan 0600 (key)
+# Expected: files exist, permissions 0644 (cert) and 0600 (key)
 
-# Verifikasi SSL DB
+# Verify SSL DB
 ls -la /var/lib/squid/ssl_db/
-# Expected: directory ada dan berisi file
+# Expected: directory exists and contains files
 
 # Test manual CA rotation
 sudo /usr/local/bin/rotate-squid-ca.sh
-# Expected: backup dibuat, CA baru digenerate, squid restart sukses
+# Expected: backup created, new CA generated, squid restart successful
 
-# Verifikasi cron job terdaftar
+# Verify cron job is registered
 crontab -l | grep rotate-squid-ca
-# Expected: ada entry "0 3 * * * /usr/local/bin/rotate-squid-ca.sh"
+# Expected: entry found "0 3 * * * /usr/local/bin/rotate-squid-ca.sh"
 ```
 
 ### 3.2 Basic Auth - Optional
 
-Hanya jika install ulang dengan Basic Auth enabled:
+Only if re-installing with Basic Auth enabled:
 
 ```bash
 # Re-install with Basic Auth
 sudo bash install.sh
-# Jawab Y untuk Basic Auth, masukkan user/password
+# Answer Y for Basic Auth, enter user/password
 
-# Tanpa credential -> DENIED
+# Without credentials -> DENIED
 curl -s -o /dev/null -w "%{http_code}" -x http://localhost:3128 https://log-api.newrelic.com/log/v1
 # Expected: 407 (Proxy Authentication Required)
 
-# Dengan credential -> ALLOWED
+# With credentials -> ALLOWED
 curl -s -o /dev/null -w "%{http_code}" -x http://user:password@localhost:3128 https://log-api.newrelic.com/log/v1
 # Expected: 200 (Connection established)
 ```
@@ -110,14 +110,14 @@ curl -s -o /dev/null -w "%{http_code}" -x http://user:password@localhost:3128 ht
 ### 3.3 Firewall Auto-Open (N2)
 
 ```bash
-# Cek apakah port sudah dibuka
+# Check if port is opened
 # UFW:
 ufw status | grep 3128
-# atau Firewalld:
+# or Firewalld:
 firewall-cmd --list-ports | grep 3128
-# atau iptables:
+# or iptables:
 iptables -L -n | grep 3128
-# Expected: port 3128 terbuka untuk TCP
+# Expected: port 3128 open for TCP
 ```
 
 ---
@@ -129,22 +129,22 @@ iptables -L -n | grep 3128
 ```bash
 cd /root/newrelic-squid-proxy
 sudo bash uninstall.sh
-# Jawab Y untuk konfirmasi
-# Jawab Y untuk hapus installer directory (optional)
+# Answer Y for confirmation
+# Answer Y to remove installer directory (optional)
 ```
 
-### 5.2 Verifikasi Clean State
+### 5.2 Verify Clean State
 
 ```bash
-# Service harus sudah mati
+# Service must be dead
 systemctl status squid 2>&1
-# Expected: "Unit squid.service could not be found" atau inactive
+# Expected: "Unit squid.service could not be found" or inactive
 
-# Port tidak lagi listening
+# Port no longer listening
 ss -tulpn | grep 3128
-# Expected: tidak ada output
+# Expected: no output
 
-# Semua file konfigurasi dihapus
+# All configuration files removed
 ls /etc/squid 2>&1
 # Expected: "No such file or directory"
 
@@ -157,39 +157,39 @@ ls /var/lib/squid 2>&1
 ls /var/spool/squid 2>&1
 # Expected: "No such file or directory"
 
-# NR integration configs dihapus
+# NR integration configs removed
 ls /etc/newrelic-infra/logging.d/squid.yml 2>&1
 # Expected: "No such file or directory"
 
 ls /etc/newrelic-infra/integrations.d/squid-metrics.yml 2>&1
 # Expected: "No such file or directory"
 
-# CA rotation script dihapus
+# CA rotation script removed
 ls /usr/local/bin/rotate-squid-ca.sh 2>&1
 # Expected: "No such file or directory"
 
-# Cron job dihapus
+# Cron job removed
 crontab -l 2>&1 | grep rotate-squid-ca
-# Expected: tidak ada output
+# Expected: no output
 
-# Temp files dihapus
+# Temp files removed
 ls /tmp/nr-squid-vars.json 2>&1
 # Expected: "No such file or directory"
 ```
 
-### 5.3 Idempotency: Re-install dari Nol
+### 5.3 Idempotency: Re-install from Scratch
 
 ```bash
-# Install ulang dari clean state
+# Re-install from clean state
 cd /root/newrelic-squid-proxy
 sudo bash install.sh
-# Jawab prompt seperti Phase 2
+# Answer prompts as in Phase 2
 
-# Verifikasi squid berjalan kembali
+# Verify squid is running again
 systemctl status squid
 ss -tulpn | grep 3128
 squid -k parse
-# Expected: semua sukses, sama seperti Phase 2
+# Expected: all success, same as Phase 2
 ```
 
 ---

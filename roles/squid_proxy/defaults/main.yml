@@ -6,12 +6,12 @@ squid_localnet:
   - "172.16.0.0/12"
   - "192.168.0.0/16"
 
-# Jika set ke true, client butuh CA public key Anda untuk trust proxy.
+# If set to true, clients need your CA public key to trust the proxy.
 ssl_bump_enabled: false
 
 # ─── TLS / SSL Config (Outbound Only) ────────
-# NOTE: Mengatur minimum TLS untuk koneksi OUTBOUND dari Proxy menuju New Relic.
-# Sejak Feb 2023, New Relic mewajibkan minimum TLS 1.2 untuk inbound mereka.
+# NOTE: Configures minimum TLS for OUTBOUND connections from the proxy to New Relic.
+# Since Feb 2023, New Relic requires minimum TLS 1.2 for their inbound connections.
 squid_tls_min_version: "1.2"
 ssl_bump_cert_path: ""
 ssl_bump_key_path: ""
@@ -28,7 +28,7 @@ basic_auth_password_file: "/etc/squid/passwords"
 basic_auth_realm: "Squid Proxy Authentication"
 
 # ─── Corporate Proxy Chaining (Cache Peer) ────
-# Aktifkan jika server tidak punya direct internet access dan harus routing lewat proxy korporat.
+# Enable if the server has no direct internet access and must route through a corporate proxy.
 cache_peer_enabled: false
 cache_peer_host: ""
 cache_peer_port: 8080
@@ -46,9 +46,9 @@ squid_max_object_size_in_memory: "512 KB"
 squid_forwarded_for: "off"
 
 # ─── Log Forwarding (M2) ───────────────────────────────────────────
-# Set ke true untuk forward squid logs ke New Relic Logs via NR Infra Agent
+# Set to true to forward Squid logs to New Relic Logs via NR Infra Agent
 nr_integration_enabled: false
 
 # ─── SELinux ───────────────────────────────────────────────────────
-# Akan di-override oleh install.sh berdasarkan output getenforce
+# Will be overridden by install.sh based on getenforce output
 squid_selinux_enabled: false

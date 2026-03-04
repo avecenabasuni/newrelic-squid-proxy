@@ -1,7 +1,7 @@
 ---
 # Task router — includes OS-specific vars and all task files
 
-- name: Cek OS dan import variabel spesifik
+- name: Check OS and import specific variables
   ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
 
 - name: Setup SELinux contexts (RHEL/CentOS)

@@ -5,32 +5,32 @@
 ###############################################################################
 
 ##############################
-# [1] DEFINISI JARINGAN/PORT #
+# [1] NETWORK DEFINITIONS    #
 ##############################
 
-# Jaringan internal (RFC1918) yang boleh memakai proxy
+# Internal networks (RFC1918) allowed to use the proxy
 {% for subnet in squid_localnet %}
 acl localnet src {{ subnet }}
 {% endfor %}
 
-# Note: ACL "localhost" sudah built-in di Squid 6.x — tidak perlu didefinisikan ulang
+# Note: ACL "localhost" is built-in in Squid 6.x — no need to redefine it
 
-# Port aman
+# Safe ports
 acl SSL_ports port 443
 acl Safe_ports port 80
 acl Safe_ports port 443
 acl Safe_ports port 1025-65535
 
 #####################################
-# [2] DAFTAR DOMAIN YANG DIIZINKAN  #
+# [2] ALLOWED DOMAINS LIST          #
 # File: /etc/squid/allowed_domains.txt
-# Update domain tanpa restart: squid -k reconfigure
+# Update domains without restart: squid -k reconfigure
 #####################################
 
 acl allowed_domains dstdomain "/etc/squid/allowed_domains.txt"
 
 {% if ssl_bump_enabled | bool %}
-# ACL berbasis SNI untuk SSL Bump (khusus traffic ke New Relic)
+# SNI-based ACL for SSL Bump (specifically for New Relic traffic)
 acl newrelic_sni ssl::server_name \
 {% for domain in newrelic_domains %}
     {{ domain }}{{ " \\" if not loop.last else "" }}
@@ -38,52 +38,52 @@ acl newrelic_sni ssl::server_name \
 
 {% endif %}
 ###########################################################
-# [3] MANAGER/METRICS ACCESS (Untuk New Relic monitoring) #
+# [3] MANAGER/METRICS ACCESS (For New Relic monitoring)   #
 ###########################################################
 
-# Izinkan akses manager (metrics) dari localhost
+# Allow manager (metrics) access from localhost
 acl manager url_regex -i ^cache_object:// /squid-internal-mgr/
 http_access allow manager localhost
 http_access deny manager
 
 #########################################
-# [4] FILTER SAFETY & BASIC PROTECTION  #
+# [4] SAFETY FILTERS & BASIC PROTECTION #
 #########################################
 
-# Tolak request ke port yang tidak aman + CONNECT selain 443
+# Deny requests to unsafe ports + CONNECT to non-443 ports
 http_access deny !Safe_ports
 http_access deny CONNECT !SSL_ports
 
-# Proteksi service lokal & link-local pada host proxy
+# Protect local and link-local services on the proxy host
 http_access deny to_localhost
 http_access deny to_linklocal
 
 ##############################################
-# [5] KEBIJAKAN AKSES (URUTAN PENTING/FINAL) #
+# [5] ACCESS POLICIES (ORDER MATTERS/FINAL)  #
 ##############################################
 
 {% if basic_auth_enabled | bool %}
-# Basic Auth — wajib credential untuk akses proxy
+# Basic Auth — credentials required for proxy access
 auth_param basic program {{ squid_ncsa_auth_path }} {{ basic_auth_password_file }}
 auth_param basic children 5
 auth_param basic realm {{ basic_auth_realm }}
 auth_param basic credentialsttl 2 hours
 acl authenticated_users proxy_auth REQUIRED
 
-# IZINKAN: user ter-autentikasi dari localhost ke domain yang diizinkan
+# ALLOW: authenticated users from localhost to allowed domains
 http_access allow authenticated_users localhost allowed_domains
 
-# IZINKAN: user ter-autentikasi dari localnet ke domain yang diizinkan
+# ALLOW: authenticated users from localnet to allowed domains
 http_access allow authenticated_users localnet allowed_domains
 {% else %}
-# IZINKAN: localhost (server proxy) ke domain yang diizinkan
+# ALLOW: localhost (proxy server) to allowed domains
 http_access allow localhost allowed_domains
 
-# IZINKAN: klien dari localnet menuju domain yang diizinkan
+# ALLOW: clients from localnet to allowed domains
 http_access allow localnet allowed_domains
 {% endif %}
 
-# TOLAK: semua selain di atas
+# DENY: everything else
 http_access deny all
 
 #####################
@@ -97,13 +97,13 @@ http_port {{ squid_port }}
 # [5b] CORPORATE PROXY CHAINING (CACHE PEER)
 ####################################################
 
-# Routing semua outbound traffic melalui proxy korporat upstream
+# Route all outbound traffic through a corporate upstream proxy
 cache_peer {{ cache_peer_host }} parent {{ cache_peer_port }} 0 no-query default
 never_direct allow allowed_domains
 
 {% endif %}
 {% if ssl_bump_enabled | bool %}
-# Port khusus HTTPS + SSL Bump (MITM untuk New Relic)
+# Dedicated port for HTTPS + SSL Bump (MITM for New Relic)
 https_port {{ ssl_bump_port }} ssl-bump \
     generate-host-certificates=on \
     cert={{ ssl_bump_cert_dest }} \
@@ -117,12 +117,12 @@ acl step1 at_step SslBump1
 acl step2 at_step SslBump2
 acl step3 at_step SslBump3
 
-# Peek SNI, bump hanya untuk domain New Relic, lainnya di-splice (no MITM)
+# Peek SNI, bump only for New Relic domains, others are spliced (no MITM)
 ssl_bump peek step1 newrelic_sni
 ssl_bump bump step2 newrelic_sni
 ssl_bump splice all
 
-# Paksa outbound TLS dari Squid pakai TLS 1.2+
+# Force outbound TLS from Squid to use TLS 1.2+
 tls_outgoing_options options=NO_SSLv3:NO_TLSv1:NO_TLSv1_1
 
 sslcrtd_program {{ squid_certgen_path }} -s {{ ssl_bump_db_path }} -M 4MB
@@ -149,7 +149,7 @@ refresh_pattern . 0 20% 4320
 cache_mem {{ squid_cache_mem }}
 maximum_object_size_in_memory {{ squid_max_object_size_in_memory }}
 
-# Jangan cache konten dinamis
+# Do not cache dynamic content
 acl QUERY urlpath_regex cgi-bin \?
 cache deny QUERY
 

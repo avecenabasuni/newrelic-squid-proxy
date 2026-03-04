@@ -1,6 +1,6 @@
 ---
 # tasks/log_forwarding.yml
-# M2 — Forward Squid access.log dan cache.log ke New Relic Logs
+# M2 — Forward Squid access.log and cache.log to New Relic Logs
 # menggunakan New Relic Infrastructure Agent (Fluent Bit embedded).
 #
 # Prerequisites:

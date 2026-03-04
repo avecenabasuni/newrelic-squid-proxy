@@ -1,6 +1,6 @@
 ---
 # teardown.yml — New Relic Squid Proxy Uninstaller
-# Menghapus semua komponen yang diinstall oleh site.yml secara bersih dan idempoten.
+# Removes all components installed by site.yml cleanly and idempotently.
 #
 # Usage:
 #   ansible-playbook teardown.yml
