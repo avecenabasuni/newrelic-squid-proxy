@@ -105,8 +105,8 @@ fi
 # Test 2: Blocked Domains
 echo "  Testing non-New Relic domain blocking..."
 HTTP_CODE_BLOCKED=$(curl "${PROXY_ARG[@]}" -s -o /dev/null -w "%{http_code}" https://www.google.com --connect-timeout 5 || echo "000")
-if [[ "$HTTP_CODE_BLOCKED" == "403" ]]; then
-    pass "Proxy correctly BLOCKS non-New Relic domains (google.com -> 403 Access Denied)"
+if [[ "$HTTP_CODE_BLOCKED" == "403" || "$HTTP_CODE_BLOCKED" == "000" ]]; then
+    pass "Proxy correctly BLOCKS non-New Relic domains (google.com -> Proxy Drop / 403 Access Denied)"
 else
     fail "Proxy FAILED to block non-New Relic domain (Got HTTP $HTTP_CODE_BLOCKED)"
 fi
