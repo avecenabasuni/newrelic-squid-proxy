@@ -498,7 +498,7 @@ echo -e "  ${ARROW} Generating configuration..."
 
 # Deteksi SELinux status (jika default enforcing di RedHat)
 SQUID_SELINUX_ENABLED="false"
-if [[ "$OS_FAMILY" == "rhel" ]]; then
+if [[ "$PKG_MANAGER" == "dnf" || "$PKG_MANAGER" == "yum" ]]; then
     if command -v getenforce >/dev/null 2>&1; then
         SELINUX_STATUS=$(getenforce)
         if [[ "$SELINUX_STATUS" == "Enforcing" || "$SELINUX_STATUS" == "Permissive" ]]; then
