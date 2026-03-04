@@ -14,6 +14,9 @@
 - name: Configure Squid
   ansible.builtin.import_tasks: configure.yml
 
+- name: Deploy Dynamic ACL domain list
+  ansible.builtin.import_tasks: dynamic_acl.yml
+
 - name: Setup SSL Bump
   ansible.builtin.import_tasks: ssl_bump.yml
   when: ssl_bump_enabled | bool
@@ -21,6 +24,10 @@
 - name: Setup Basic Auth
   ansible.builtin.import_tasks: auth.yml
   when: basic_auth_enabled | bool
+
+- name: Setup Log Forwarding to New Relic
+  ansible.builtin.import_tasks: log_forwarding.yml
+  when: log_forwarding_enabled | d(false) | bool
 
 - name: Manage Squid service
   ansible.builtin.import_tasks: service.yml

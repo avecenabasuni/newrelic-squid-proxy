@@ -12,3 +12,15 @@
     name: "{{ squid_service_name }}"
     state: restarted
   listen: "restart squid"
+
+# M1 — Reconfigure Squid without full restart (picks up changes to allowed_domains.txt)
+- name: Reconfigure Squid
+  ansible.builtin.command: squid -k reconfigure
+  changed_when: true
+
+# M2 — Restart New Relic Infrastructure Agent to pick up new log forwarding config
+- name: Restart NR Infra Agent
+  ansible.builtin.service:
+    name: newrelic-infra
+    state: restarted
+  ignore_errors: true  # graceful if NR agent is not yet installed

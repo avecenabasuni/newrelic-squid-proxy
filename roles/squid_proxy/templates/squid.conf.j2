@@ -23,12 +23,11 @@ acl Safe_ports port 1025-65535
 
 #####################################
 # [2] DAFTAR DOMAIN YANG DIIZINKAN  #
+# File: /etc/squid/allowed_domains.txt
+# Update domain tanpa restart: squid -k reconfigure
 #####################################
 
-acl allowed_domains dstdomain \
-{% for domain in allowed_domains %}
-    {{ domain }}{{ " \\" if not loop.last else "" }}
-{% endfor %}
+acl allowed_domains dstdomain "/etc/squid/allowed_domains.txt"
 
 {% if ssl_bump_enabled | bool %}
 # ACL berbasis SNI untuk SSL Bump (khusus traffic ke New Relic)

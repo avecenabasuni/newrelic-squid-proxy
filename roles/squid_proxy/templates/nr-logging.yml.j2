@@ -1,0 +1,19 @@
+# /etc/newrelic-infra/logging.d/squid.yml
+# Managed by Ansible — DO NOT EDIT MANUALLY
+# Forward Squid Proxy logs to New Relic Logs via the Infrastructure Agent (Fluent Bit)
+# Docs: https://docs.newrelic.com/docs/logs/forward-logs/forward-your-logs-using-infrastructure-agent/
+
+logs:
+  - name: squid-access
+    file: /var/log/squid/access.log
+    attributes:
+      logtype: squid_access
+      service: squid-proxy
+      env: poc
+
+  - name: squid-cache
+    file: /var/log/squid/cache.log
+    attributes:
+      logtype: squid_cache
+      service: squid-proxy
+      env: poc

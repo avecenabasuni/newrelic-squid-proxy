@@ -43,3 +43,11 @@ squid_max_object_size_in_memory: "512 KB"
 
 # ─── Privacy ───────────────────────────────────
 squid_forwarded_for: "off"
+
+# ─── Log Forwarding (M2) ───────────────────────────────────────────
+# Set ke true untuk forward squid logs ke New Relic Logs via NR Infra Agent
+log_forwarding_enabled: false
+
+# ─── SELinux ───────────────────────────────────────────────────────
+# Akan di-override oleh install.sh berdasarkan output getenforce
+squid_selinux_enabled: false

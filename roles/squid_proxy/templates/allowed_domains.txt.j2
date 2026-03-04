@@ -1,0 +1,13 @@
+# /etc/squid/allowed_domains.txt
+# Managed by Ansible — DO NOT EDIT MANUALLY
+# To add domains without re-running Ansible:
+#   1. Edit this file and add domains (one per line or with leading dot for wildcards)
+#   2. Run: squid -k reconfigure
+#
+# Format:
+#   .example.com   → matches all subdomains of example.com
+#   example.com    → matches only example.com exactly
+#
+{% for domain in allowed_domains %}
+{{ domain }}
+{% endfor %}

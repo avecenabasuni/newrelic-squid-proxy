@@ -1,0 +1,14 @@
+---
+# tasks/dynamic_acl.yml
+# M1 — Deploy allowed_domains.txt sebagai file eksternal untuk Squid ACL.
+# Setelah edit file ini, jalankan: squid -k reconfigure (tanpa restart!)
+
+- name: Deploy allowed domains list
+  ansible.builtin.template:
+    src: allowed_domains.txt.j2
+    dest: /etc/squid/allowed_domains.txt
+    owner: root
+    group: "{{ squid_group }}"
+    mode: "0644"
+  notify: Reconfigure Squid
+  tags: ['squid', 'acl', 'dynamic_acl']

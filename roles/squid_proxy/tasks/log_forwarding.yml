@@ -1,0 +1,43 @@
+---
+# tasks/log_forwarding.yml
+# M2 — Forward Squid access.log dan cache.log ke New Relic Logs
+# menggunakan New Relic Infrastructure Agent (Fluent Bit embedded).
+#
+# Prerequisites:
+#   - newrelic-infra >= 1.11.0 sudah terinstall (termasuk built-in Fluent Bit)
+#   - Directory /etc/newrelic-infra/logging.d/ tersedia
+
+- name: Check if New Relic Infrastructure Agent is installed
+  ansible.builtin.command: newrelic-infra --version
+  register: nr_infra_check
+  changed_when: false
+  failed_when: false
+  tags: ['logging', 'newrelic']
+
+- name: Warn if New Relic Infrastructure Agent is not found
+  ansible.builtin.debug:
+    msg: >-
+      ⚠  newrelic-infra not found. Log forwarding config will be deployed but
+      will not take effect until the agent is installed. Install guide:
+      https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/
+  when: nr_infra_check.rc != 0
+  tags: ['logging', 'newrelic']
+
+- name: Ensure logging.d directory exists
+  ansible.builtin.file:
+    path: /etc/newrelic-infra/logging.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: ['logging', 'newrelic']
+
+- name: Deploy Squid log forwarding config for New Relic Infra Agent
+  ansible.builtin.template:
+    src: nr-logging.yml.j2
+    dest: /etc/newrelic-infra/logging.d/squid.yml
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart NR Infra Agent
+  tags: ['logging', 'newrelic']
