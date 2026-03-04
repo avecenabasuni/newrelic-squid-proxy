@@ -73,6 +73,7 @@ echo -e "  ${DOT}  /var/log/squid      (access & cache logs)"
 echo -e "  ${DOT}  /var/spool/squid    (disk cache)"
 echo -e "  ${DOT}  /var/lib/squid      (SSL bump database)"
 echo -e "  ${DOT}  /tmp/nr-squid-vars.json"
+echo -e "  ${DOT}  New Relic Agent configs & scripts"
 echo ""
 
 CONFIRM=""
@@ -143,6 +144,9 @@ declare -A PATHS=(
     ["/var/spool/squid"]="Disk cache"
     ["/var/lib/squid"]="SSL bump database"
     ["/tmp/nr-squid-vars.json"]="Installer vars file"
+    ["/usr/local/bin/rotate-squid-ca.sh"]="CA Rotation Script"
+    ["/etc/newrelic-infra/logging.d/squid.yml"]="NR Logging Config"
+    ["/etc/newrelic-infra/integrations.d/squid-metrics.yml"]="NR Metrics Config"
 )
 
 for path in "${!PATHS[@]}"; do
@@ -154,6 +158,17 @@ for path in "${!PATHS[@]}"; do
         echo -e "  ${DOT}  ${DIM}${label} not found — skipped${RESET}"
     fi
 done
+
+# Remove diagnostic archives
+rm -f /tmp/newrelic-squid-diagnostic-*.tar.gz 2>/dev/null || true
+
+# Remove cron job
+if command -v crontab &>/dev/null; then
+    if crontab -l 2>/dev/null | grep -q "rotate-squid-ca.sh"; then
+        crontab -l 2>/dev/null | grep -v "rotate-squid-ca.sh" | grep -v "Rotate Squid CA" | crontab - || true
+        log_info "CA rotation cron job removed"
+    fi
+fi
 
 # ─── Final Banner ─────────────────────────────────────────────────────────────
 echo ""

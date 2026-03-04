@@ -74,7 +74,33 @@
         state: absent
       ignore_errors: true
 
-    # 5. Summary
+    # 5. Remove New Relic integrations & diagnostic tools
+    - name: Remove New Relic integration configurations
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/newrelic-infra/logging.d/squid.yml
+        - /etc/newrelic-infra/integrations.d/squid-metrics.yml
+      ignore_errors: true
+
+    - name: Remove CA rotation script
+      ansible.builtin.file:
+        path: /usr/local/bin/rotate-squid-ca.sh
+        state: absent
+
+    - name: Remove CA rotation cron
+      ansible.builtin.cron:
+        name: "Rotate Squid CA"
+        state: absent
+      ignore_errors: true
+
+    - name: Remove diagnostic archives
+      ansible.builtin.shell: rm -f /tmp/newrelic-squid-diagnostic-*.tar.gz
+      ignore_errors: true
+      changed_when: false
+
+    # 6. Summary
     - name: Uninstall complete
       ansible.builtin.debug:
         msg: >-
