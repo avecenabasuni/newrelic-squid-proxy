@@ -305,6 +305,7 @@ step "Configuring Squid Proxy"
 
 # Initialize all variables (prevents unbound variable errors with set -u)
 SQUID_PORT=""
+NR_REGION=""
 SSL_BUMP_INPUT=""
 SSL_BUMP_ENABLED="false"
 SSL_BUMP_AUTO_GENERATE="false"
@@ -327,6 +328,20 @@ echo ""
 prompt "${BOLD}Proxy port${RESET} ${GRAY}[3128]${RESET}: "
 read -r SQUID_PORT < /dev/tty
 SQUID_PORT="${SQUID_PORT:-3128}"
+
+echo ""
+echo -e "  ${DIM}Select New Relic Data Region:${RESET}"
+echo -e "    1) US (Default)"
+echo -e "    2) EU"
+echo -e "    3) Both (US & EU)"
+prompt "  ${BOLD}Region${RESET} ${GRAY}[1/2/3]${RESET}: "
+read -r REGION_INPUT < /dev/tty
+
+case "$REGION_INPUT" in
+    2) NR_REGION="eu" ;;
+    3) NR_REGION="both" ;;
+    *) NR_REGION="us" ;;
+esac
 
 echo ""
 prompt "${BOLD}Enable SSL Bump (MITM)?${RESET} ${GRAY}[y/N]${RESET}: "
@@ -413,6 +428,7 @@ echo -e "  ${BOLD}${WHITE}  CONFIGURATION SUMMARY${RESET}"
 echo ""
 echo -e "  ${DOT}  OS              ${BOLD}${OS_ID} ${OS_VERSION}${RESET}"
 echo -e "  ${DOT}  Proxy Port      ${BOLD}${SQUID_PORT}${RESET}"
+echo -e "  ${DOT}  NR Region       ${BOLD}${NR_REGION^^}${RESET}"
 
 if [ "$SSL_BUMP_ENABLED" = "true" ]; then
     echo -e "  ${DOT}  SSL Bump        ${GREEN}${BOLD}ENABLED${RESET}"
@@ -473,6 +489,7 @@ fi
 cat <<EOF > /tmp/nr-squid-vars.json
 {
   "squid_port": ${SQUID_PORT},
+  "nr_region": "${NR_REGION}",
   "ssl_bump_enabled": ${SSL_BUMP_ENABLED},
   "ssl_bump_auto_generate": ${SSL_BUMP_AUTO_GENERATE},
   "ssl_bump_cert_path": "${SSL_BUMP_CERT_PATH}",
@@ -507,14 +524,51 @@ if [ $? -ne 0 ]; then
 fi
 
 echo ""
-log_info "Installation complete"
+log_info "Installation sequence complete"
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# STEP 7: Verification
+# STEP 7: Firewall Configuration (N2)
+# ═══════════════════════════════════════════════════════════════════════════════
+FW_TOOL=""
+if command -v ufw &>/dev/null; then
+    FW_TOOL="ufw"
+elif command -v firewall-cmd &>/dev/null; then
+    FW_TOOL="firewalld"
+elif command -v iptables &>/dev/null; then
+    FW_TOOL="iptables"
+fi
+
+if [ -n "$FW_TOOL" ] && [ "$DRY_RUN" != "true" ]; then
+    step "Firewall Configuration"
+    echo -e "  ${DIM}Firewall tool detected: ${FW_TOOL}${RESET}"
+    prompt "  ${BOLD}Do you want to automatically open port ${SQUID_PORT} on your firewall?${RESET} ${GRAY}[y/N]${RESET}: "
+    read -r OPEN_FW < /dev/tty
+    if [[ "$OPEN_FW" =~ ^[Yy]$ ]]; then
+        echo ""
+        case "$FW_TOOL" in
+            ufw)
+                ufw allow "$SQUID_PORT/tcp" >/dev/null 2>&1
+                ;;
+            firewalld)
+                firewall-cmd --permanent --add-port="$SQUID_PORT/tcp" >/dev/null 2>&1
+                firewall-cmd --reload >/dev/null 2>&1
+                ;;
+            iptables)
+                iptables -I INPUT -p tcp --dport "$SQUID_PORT" -j ACCEPT >/dev/null 2>&1
+                ;;
+        esac
+        echo -e "  ${GREEN}${CHECK} Firewall port $SQUID_PORT opened using $FW_TOOL.${RESET}"
+    else
+        echo -e "  ${YELLOW}${ARROW} Skipping firewall configuration. Please open port $SQUID_PORT manually if needed.${RESET}"
+    fi
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# STEP 8: Verification
 # ═══════════════════════════════════════════════════════════════════════════════
 step "Running verification tests"
 
-echo -e "  ${ARROW} Testing connectivity to New Relic endpoints..."
+echo -e "  ${ARROW} Testing connectivity to New Relic endpoints (${NR_REGION^^})..."
 echo ""
 
 ansible-playbook verify.yml ${ANSIBLE_FLAGS}
@@ -525,16 +579,15 @@ VERIFY_EXIT=$?
 rm -f "$VARS_FILE"
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Final Summary
+# Final Summary & Snippets (N3)
 # ═══════════════════════════════════════════════════════════════════════════════
-echo ""
 echo ""
 
 if [ $VERIFY_EXIT -eq 0 ]; then
     echo -e "${BOLD}${GREEN}"
     echo "  ╔═══════════════════════════════════════════════════════════╗"
     echo "  ║                                                           ║"
-    echo "  ║        ✔  Installation Successful!                        ║"
+    echo "  ║        ✔  Installation & Verification Successful!         ║"
     echo "  ║                                                           ║"
     echo "  ╚═══════════════════════════════════════════════════════════╝"
     echo -e "${RESET}"
@@ -548,6 +601,9 @@ else
     echo "  ╚═══════════════════════════════════════════════════════════╝"
     echo -e "${RESET}"
 fi
+
+HOST_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+HOST_IP=${HOST_IP:-localhost}
 
 echo -e "  ${BOLD}Proxy Details${RESET}"
 separator
@@ -565,30 +621,50 @@ echo -e "  ${DOT}  Config file     ${DIM}/etc/squid/squid.conf${RESET}"
 echo -e "  ${DOT}  Install dir     ${DIM}${INSTALL_DIR}${RESET}"
 echo ""
 
-echo -e "  ${BOLD}Quick Start${RESET}"
-separator
-
+# Build URL for snippets
+PROXY_URL="http://${HOST_IP}:${SQUID_PORT}"
 if [ "$BASIC_AUTH_ENABLED" = "true" ]; then
-    echo -e "  ${GRAY}# Set proxy environment variable${RESET}"
-    echo -e "  ${GREEN}export https_proxy=http://${BASIC_AUTH_USERNAME}:<password>@<host>:${SQUID_PORT}${RESET}"
-    echo ""
-    echo -e "  ${GRAY}# Test connection${RESET}"
-    echo -e "  ${GREEN}curl -x http://${BASIC_AUTH_USERNAME}:<password>@localhost:${SQUID_PORT} https://newrelic.com${RESET}"
-else
-    echo -e "  ${GRAY}# Set proxy environment variable${RESET}"
-    echo -e "  ${GREEN}export https_proxy=http://<host>:${SQUID_PORT}${RESET}"
-    echo ""
-    echo -e "  ${GRAY}# Test connection${RESET}"
-    echo -e "  ${GREEN}curl -x http://localhost:${SQUID_PORT} https://newrelic.com${RESET}"
+    PROXY_URL="http://${BASIC_AUTH_USERNAME}:<password>@${HOST_IP}:${SQUID_PORT}"
 fi
 
+echo -e "  ${BOLD}Configuration Snippets (Ready to copy)${RESET}"
+separator
+
+echo -e "  ${GRAY}# General Environment Variables (Go, Node.js, Ruby, PHP)${RESET}"
+echo -e "  ${GREEN}export HTTP_PROXY=\"$PROXY_URL\"${RESET}"
+echo -e "  ${GREEN}export HTTPS_PROXY=\"$PROXY_URL\"${RESET}"
+echo ""
+
+echo -e "  ${GRAY}# New Relic Infrastructure Agent (/etc/newrelic-infra.yml)${RESET}"
+echo -e "  ${GREEN}proxy: $PROXY_URL${RESET}"
+echo ""
+
+echo -e "  ${GRAY}# New Relic Java Agent (JVM args)${RESET}"
+echo -e "  ${GREEN}-Dnewrelic.config.proxy_host=${HOST_IP}${RESET}"
+echo -e "  ${GREEN}-Dnewrelic.config.proxy_port=${SQUID_PORT}${RESET}"
+if [ "$BASIC_AUTH_ENABLED" = "true" ]; then
+    echo -e "  ${GREEN}-Dnewrelic.config.proxy_user=${BASIC_AUTH_USERNAME}${RESET}"
+    echo -e "  ${GREEN}-Dnewrelic.config.proxy_password=<password>${RESET}"
+fi
+echo ""
+
+echo -e "  ${GRAY}# New Relic Python Agent (newrelic.ini)${RESET}"
+echo -e "  ${GREEN}proxy_host = ${HOST_IP}${RESET}"
+echo -e "  ${GREEN}proxy_port = ${SQUID_PORT}${RESET}"
+if [ "$BASIC_AUTH_ENABLED" = "true" ]; then
+    echo -e "  ${GREEN}proxy_user = ${BASIC_AUTH_USERNAME}${RESET}"
+    echo -e "  ${GREEN}proxy_password = <password>${RESET}"
+fi
 echo ""
 
 if [ "$SSL_BUMP_ENABLED" = "true" ]; then
-    echo -e "  ${BOLD}SSL Bump Usage${RESET}"
+    echo -e "  ${BOLD}SSL Bump Notice${RESET}"
     separator
     echo -e "  ${GRAY}# Use SSL Bump port for TLS interception${RESET}"
-    echo -e "  ${GREEN}export https_proxy=http://localhost:3129${RESET}"
+    echo -e "  ${GREEN}export HTTPS_PROXY=http://${HOST_IP}:3129${RESET}"
+    if [ "$SSL_BUMP_AUTO_GENERATE" = "true" ]; then
+        echo -e "  ${RED}⚠ You must distribute the Root CA (${DIM}/etc/squid/ssl_cert/myCA.crt${RED}) to all client machines!${RESET}"
+    fi
     echo ""
 fi
 

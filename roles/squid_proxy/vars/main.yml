@@ -3,11 +3,16 @@
 # NOTE: Squid 6.x is strict about subdomain overlaps.
 #       If ".newrelic.com" is listed, do NOT also list "api.newrelic.com"
 #       (it's already covered by the wildcard). Same for other wildcards.
-newrelic_domains:
+newrelic_domains_us:
   - ".newrelic.com"
   - ".nr-data.net"
   - ".js-agent.newrelic.com"
   - ".synthetics-horde.nr-data.net"
+
+newrelic_domains_eu:
+  - ".eu.newrelic.com"
+  - ".eu01.nr-data.net"
+  - ".js-agent.eu.newrelic.com"
   - ".synthetics-horde.eu01.nr-data.net"
 
 # ─── OS Repo Domains (agar installer NR bisa pull packages) ──
@@ -25,11 +30,20 @@ os_repo_domains:
   - ".suse.com"
 
 # Merged list untuk template
+newrelic_domains: >-
+  {%- if nr_region == 'us' -%}
+    {{ newrelic_domains_us }}
+  {%- elif nr_region == 'eu' -%}
+    {{ newrelic_domains_eu }}
+  {%- else -%}
+    {{ newrelic_domains_us + newrelic_domains_eu | unique }}
+  {%- endif -%}
+
 allowed_domains: "{{ newrelic_domains + os_repo_domains }}"
 
 # ─── New Relic Endpoints (untuk verification) ──
 # Di-ping via verify.yml untuk memastikan routing sukses
-newrelic_endpoints:
+newrelic_endpoints_us:
   - "https://collector.newrelic.com"
   - "https://aws-api.newrelic.com"
   - "https://cloud-collector.newrelic.com"
@@ -40,7 +54,6 @@ newrelic_endpoints:
   - "https://nerdgraph.newrelic.com"
   - "https://js-agent.newrelic.com"
   - "https://synthetics-horde.nr-data.net"
-  - "https://synthetics-horde.eu01.nr-data.net"
   - "https://bam.nr-data.net"
   - "https://bam-cell.nr-data.net"
   - "https://csec.nr-data.net"
@@ -53,17 +66,24 @@ newrelic_endpoints:
   - "https://mobile-crash.newrelic.com"
   - "https://mobile-symbol-upload.newrelic.com"
   - "https://otlp.nr-data.net"
+  - "https://download.newrelic.com"
+
+newrelic_endpoints_eu:
   - "https://collector.eu.newrelic.com"
   - "https://collector.eu01.nr-data.net"
   - "https://aws-api.eu.newrelic.com"
   - "https://aws-api.eu01.nr-data.net"
   - "https://cloud-collector.eu.newrelic.com"
+  - "https://metrics-api.eu.newrelic.com"
+  - "https://log-api.eu.newrelic.com"
+  - "https://trace-api.eu.newrelic.com"
+  - "https://metric-api.eu.newrelic.com"
+  - "https://nerdgraph.eu.newrelic.com"
+  - "https://js-agent.eu.newrelic.com"
+  - "https://synthetics-horde.eu01.nr-data.net"
   - "https://bam.eu01.nr-data.net"
   - "https://csec.eu01.nr-data.net"
   - "https://insights-collector.eu01.nr-data.net"
-  - "https://log-api.eu.newrelic.com"
-  - "https://metric-api.eu.newrelic.com"
-  - "https://trace-api.eu.newrelic.com"
   - "https://infra-api.eu.newrelic.com"
   - "https://infra-api.eu01.nr-data.net"
   - "https://identity-api.eu.newrelic.com"
@@ -74,3 +94,12 @@ newrelic_endpoints:
   - "https://mobile-symbol-upload.eu01.nr-data.net"
   - "https://otlp.eu01.nr-data.net"
   - "https://download.newrelic.com"
+
+newrelic_endpoints: >-
+  {%- if nr_region == 'us' -%}
+    {{ newrelic_endpoints_us }}
+  {%- elif nr_region == 'eu' -%}
+    {{ newrelic_endpoints_eu }}
+  {%- else -%}
+    {{ newrelic_endpoints_us + newrelic_endpoints_eu | unique }}
+  {%- endif -%}

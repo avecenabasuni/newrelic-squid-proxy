@@ -52,15 +52,15 @@ Roadmap fitur untuk membuat `newrelic-squid-proxy` menjadi lebih robust dan ente
 
 ### Prioritas Tinggi
 
-- [ ] **N1: Region-Aware Configuration (US/EU)**
+- [x] **N1: Region-Aware Configuration (US/EU)**
   - Saat ini semua 32+ endpoint (US + EU) di-whitelist dan di-tes. Di environment strict, customer hanya mau whitelist region mereka saja.
   - Solusi: Tambah prompt "Which NR region? [1] US  [2] EU  [3] Both (default)" di `install.sh`. Endpoint whitelist dan verification otomatis difilter per region.
   - Effort: Low | Value: High
-- [ ] **N2: Firewall Auto-Open**
+- [x] **N2: Firewall Auto-Open**
   - Masalah paling sering setelah install: traffic tetap gagal karena port belum dibuka di firewall lokal.
   - Solusi: Deteksi `ufw`/`firewalld`/`iptables` dan tawarkan membuka port proxy di akhir instalasi.
   - Effort: Low | Value: High
-- [ ] **N3: Proxy Config Snippet Generator**
+- [x] **N3: Proxy Config Snippet Generator**
   - Summary akhir install hanya tampilkan `export https_proxy=...`. SE harus cari sendiri cara set proxy di tiap agent NR.
   - Solusi: Generate dan tampilkan ready-to-copy config snippets untuk NR Infra Agent (`newrelic-infra.yml`), Java APM (`-D` JVM args), Python APM (`newrelic.ini`), Node.js (`env`), .NET (`newrelic.config`).
   - Effort: Low | Value: High
