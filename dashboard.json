@@ -1,7 +1,19 @@
 {
   "name": "Squid Proxy Monitoring",
-  "description": "Real-time observability dashboard for Squid forward proxy — powered by nri-flex Cache Manager integration",
+  "description": "Real-time observability dashboard for Squid forward proxy \u2014 powered by nri-flex Cache Manager integration",
   "permissions": "PUBLIC_READ_WRITE",
+  "variables": [
+    {
+      "name": "proxy_host",
+      "title": "Proxy Host",
+      "type": "NRQL",
+      "nrqlQuery": {
+        "accountIds": [],
+        "query": "SELECT uniques(proxy_host) FROM SquidCountersSample"
+      },
+      "replacementStrategy": "DEFAULT"
+    }
+  ],
   "pages": [
     {
       "name": "Overview",
@@ -10,7 +22,6 @@
         {
           "title": "Total HTTP Requests",
           "layout": { "column": 1, "row": 1, "width": 3, "height": 3 },
-          "linkedEntityGuids": null,
           "visualization": { "id": "viz.billboard" },
           "rawConfiguration": {
             "facet": { "showOtherSeries": false },
@@ -26,7 +37,6 @@
         {
           "title": "Client Errors",
           "layout": { "column": 4, "row": 1, "width": 3, "height": 3 },
-          "linkedEntityGuids": null,
           "visualization": { "id": "viz.billboard" },
           "rawConfiguration": {
             "facet": { "showOtherSeries": false },
@@ -46,7 +56,6 @@
         {
           "title": "Active Clients",
           "layout": { "column": 7, "row": 1, "width": 3, "height": 3 },
-          "linkedEntityGuids": null,
           "visualization": { "id": "viz.billboard" },
           "rawConfiguration": {
             "facet": { "showOtherSeries": false },
@@ -62,7 +71,6 @@
         {
           "title": "Proxy Uptime",
           "layout": { "column": 10, "row": 1, "width": 3, "height": 3 },
-          "linkedEntityGuids": null,
           "visualization": { "id": "viz.billboard" },
           "rawConfiguration": {
             "facet": { "showOtherSeries": false },
@@ -78,7 +86,6 @@
         {
           "title": "HTTP Request Volume",
           "layout": { "column": 1, "row": 4, "width": 6, "height": 3 },
-          "linkedEntityGuids": null,
           "visualization": { "id": "viz.line" },
           "rawConfiguration": {
             "facet": { "showOtherSeries": false },
@@ -96,7 +103,6 @@
         {
           "title": "Bandwidth (KB)",
           "layout": { "column": 7, "row": 4, "width": 6, "height": 3 },
-          "linkedEntityGuids": null,
           "visualization": { "id": "viz.area" },
           "rawConfiguration": {
             "facet": { "showOtherSeries": false },
@@ -113,7 +119,6 @@
         {
           "title": "Error Trend",
           "layout": { "column": 1, "row": 7, "width": 4, "height": 3 },
-          "linkedEntityGuids": null,
           "visualization": { "id": "viz.line" },
           "rawConfiguration": {
             "facet": { "showOtherSeries": false },
@@ -136,7 +141,6 @@
         {
           "title": "CPU Usage (%)",
           "layout": { "column": 5, "row": 7, "width": 4, "height": 3 },
-          "linkedEntityGuids": null,
           "visualization": { "id": "viz.line" },
           "rawConfiguration": {
             "facet": { "showOtherSeries": false },
@@ -153,7 +157,6 @@
         {
           "title": "Memory (KB)",
           "layout": { "column": 9, "row": 7, "width": 4, "height": 3 },
-          "linkedEntityGuids": null,
           "visualization": { "id": "viz.line" },
           "rawConfiguration": {
             "facet": { "showOtherSeries": false },
@@ -170,7 +173,6 @@
         {
           "title": "File Descriptors",
           "layout": { "column": 1, "row": 10, "width": 4, "height": 3 },
-          "linkedEntityGuids": null,
           "visualization": { "id": "viz.bar" },
           "rawConfiguration": {
             "facet": { "showOtherSeries": false },
@@ -186,7 +188,6 @@
         {
           "title": "ICP / Cache Digest Activity",
           "layout": { "column": 5, "row": 10, "width": 4, "height": 3 },
-          "linkedEntityGuids": null,
           "visualization": { "id": "viz.line" },
           "rawConfiguration": {
             "facet": { "showOtherSeries": false },
@@ -203,7 +204,6 @@
         {
           "title": "Proxy Runtime Summary",
           "layout": { "column": 9, "row": 10, "width": 4, "height": 3 },
-          "linkedEntityGuids": null,
           "visualization": { "id": "viz.table" },
           "rawConfiguration": {
             "facet": { "showOtherSeries": false },
