@@ -22,3 +22,15 @@ Berikut adalah beberapa ide fitur tambahan yang bisa diimplementasikan ke depann
 ## 5. Script & CLI Enhancements
 *   **Uninstall Script**: Menambahkan `uninstall.sh` atau playbook `teardown.yml` untuk menghapus instalasi Squid Proxy, membersihkan file konfigurasi, log, dan package dependencies secara bersih.
 *   **Dry-run Mode**: Menambahkan flag `--dry-run` pada `install.sh` untuk mensimulasikan perubahan yang akan dilakukan Ansible sebelum mengekskusi.
+
+## 6. Enterprise Integration & Edge Cases (Advanced)
+*   **Corporate Proxy Chaining (Cache Peer)**: Dukungan untuk merutekan traffic dari `newrelic-squid-proxy` ke proxy korporat utama yang sudah ada. Sangat berguna di enterprise environment di mana server lokal tidak punya direct internet access sama sekali, namun butuh bypass SSL inspection khusus untuk traffic New Relic.
+*   **Synthetic Minion Profiles**: Menyediakan preset konfigurasi khusus yang dioptimasi untuk kebutuhan network **New Relic Private Minions**, yang memiliki requirement sangat berbeda dengan standard Infra Agent.
+
+## 7. Diagnostics & Troubleshooting
+*   **Companion Health Check API**: Sebuah service ringan (Python/Go) berjalan paralel dengan Squid yang menyediakan endpoint `/health`. Endpoint ini bukan hanya mengecek proses Squid berjalan, tapi aktif melakukan HTTP test ke New Relic API via proxy. Sangat ideal untuk health-check Load Balancer di setup HA.
+*   **One-Click Diagnostic Archive**: Fitur `support-bundle.sh` untuk mengumpulkan seluruh logs (`access.log`, `cache.log`), config (`squid.conf`), Ansible run output, dan OS metrics ke dalam sebuah file `.tar.gz`. Fitur ini memudahkan customer jika perlu membuka tiket ke New Relic Support terkait issue proxy.
+
+## 8. Usability & Automation
+*   **Agent Auto-Configuration Tool**: Sebuah playbook atau script tambahan yang bisa meng-scan environment lokal untuk instalasi New Relic Agent (`newrelic-infra`, APM agents) lalu menyuntikkan (inject) konfigurasi proxy ke environment variables / config file mereka secara otomatis.
+*   **Lightweight Web Management GUI**: Interface UI simpel (React/Go) di port lokal untuk menambahkan domain allowed, me-rotate certificate, dan melihat live traffic/logs secara visual tanpa harus menyentuh terminal.
