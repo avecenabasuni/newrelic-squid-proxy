@@ -290,6 +290,9 @@ AUTH_INPUT=""
 BASIC_AUTH_ENABLED="false"
 BASIC_AUTH_USERNAME=""
 BASIC_AUTH_PASSWORD=""
+CACHE_PEER_ENABLED="false"
+CACHE_PEER_HOST=""
+CACHE_PEER_PORT=""
 
 echo ""
 echo -e "  ${GRAY}Answer the following prompts to configure your proxy.${RESET}"
@@ -346,6 +349,26 @@ if [[ "$AUTH_INPUT" =~ ^[Yy]$ ]]; then
     fi
 fi
 
+echo ""
+echo -e "  ${GRAY}  ${DIM}Enable if outbound traffic must go through a corporate proxy.${RESET}"
+prompt "${BOLD}Enable Corporate Proxy Chaining (Cache Peer)?${RESET} ${GRAY}[y/N]${RESET}: "
+read -r CACHE_PEER_INPUT < /dev/tty
+
+if [[ "$CACHE_PEER_INPUT" =~ ^[Yy]$ ]]; then
+    CACHE_PEER_ENABLED="true"
+
+    prompt "  Corporate proxy host ${GRAY}(e.g. proxy.company.com)${RESET}: "
+    read -r CACHE_PEER_HOST < /dev/tty
+    if [ -z "$CACHE_PEER_HOST" ]; then
+        log_error "Proxy host cannot be empty."
+        exit 1
+    fi
+
+    prompt "  Corporate proxy port ${GRAY}[8080]${RESET}: "
+    read -r CACHE_PEER_PORT < /dev/tty
+    CACHE_PEER_PORT="${CACHE_PEER_PORT:-8080}"
+fi
+
 # ─── Confirmation Summary ────────────────────────────────────────────────────
 echo ""
 separator
@@ -367,6 +390,12 @@ if [ "$BASIC_AUTH_ENABLED" = "true" ]; then
     echo -e "  ${DOT}  Basic Auth      ${GREEN}${BOLD}ENABLED${RESET} ${GRAY}(user: ${BASIC_AUTH_USERNAME})${RESET}"
 else
     echo -e "  ${DOT}  Basic Auth      ${DIM}disabled${RESET}"
+fi
+
+if [ "$CACHE_PEER_ENABLED" = "true" ]; then
+    echo -e "  ${DOT}  Cache Peer      ${GREEN}${BOLD}ENABLED${RESET} ${GRAY}(${CACHE_PEER_HOST}:${CACHE_PEER_PORT})${RESET}"
+else
+    echo -e "  ${DOT}  Cache Peer      ${DIM}disabled${RESET}"
 fi
 
 echo ""
@@ -410,6 +439,9 @@ cat <<EOF > /tmp/nr-squid-vars.json
   "basic_auth_enabled": ${BASIC_AUTH_ENABLED},
   "basic_auth_username": "${BASIC_AUTH_USERNAME}",
   "basic_auth_password": "${BASIC_AUTH_PASSWORD}",
+  "cache_peer_enabled": ${CACHE_PEER_ENABLED},
+  "cache_peer_host": "${CACHE_PEER_HOST}",
+  "cache_peer_port": "${CACHE_PEER_PORT}",
   "squid_selinux_enabled": ${SQUID_SELINUX_ENABLED}
 }
 EOF

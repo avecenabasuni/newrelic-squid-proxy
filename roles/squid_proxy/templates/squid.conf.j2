@@ -84,6 +84,16 @@ http_access deny all
 
 http_port {{ squid_port }}
 
+{% if cache_peer_enabled | bool %}
+####################################################
+# [5b] CORPORATE PROXY CHAINING (CACHE PEER)
+####################################################
+
+# Routing semua outbound traffic melalui proxy korporat upstream
+cache_peer {{ cache_peer_host }} parent {{ cache_peer_port }} 0 no-query default
+never_direct allow allowed_domains
+
+{% endif %}
 {% if ssl_bump_enabled | bool %}
 # Port khusus HTTPS + SSL Bump (MITM untuk New Relic)
 https_port {{ ssl_bump_port }} ssl-bump \

@@ -26,6 +26,12 @@ basic_auth_password: ""
 basic_auth_password_file: "/etc/squid/passwords"
 basic_auth_realm: "Squid Proxy Authentication"
 
+# ─── Corporate Proxy Chaining (Cache Peer) ────
+# Aktifkan jika server tidak punya direct internet access dan harus routing lewat proxy korporat.
+cache_peer_enabled: false
+cache_peer_host: ""
+cache_peer_port: 8080
+
 # ─── Logging ───────────────────────────────────
 squid_access_log: "/var/log/squid/access.log"
 squid_cache_log: "/var/log/squid/cache.log"
