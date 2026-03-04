@@ -571,6 +571,7 @@ elif command -v iptables &>/dev/null; then
 fi
 
 if [ -n "$FW_TOOL" ] && [ "$DRY_RUN" != "true" ]; then
+    TOTAL_STEPS=$((TOTAL_STEPS + 1))
     step "Firewall Configuration"
     echo -e "  ${DIM}Firewall tool detected: ${FW_TOOL}${RESET}"
     prompt "  ${BOLD}Do you want to automatically open port ${SQUID_PORT} on your firewall?${RESET} ${GRAY}[y/N]${RESET}: "
@@ -589,9 +590,9 @@ if [ -n "$FW_TOOL" ] && [ "$DRY_RUN" != "true" ]; then
                 iptables -I INPUT -p tcp --dport "$SQUID_PORT" -j ACCEPT >/dev/null 2>&1
                 ;;
         esac
-        echo -e "  ${GREEN}${CHECK} Firewall port $SQUID_PORT opened using $FW_TOOL.${RESET}"
+        log_info "Firewall port ${BOLD}$SQUID_PORT${RESET} opened using ${BOLD}$FW_TOOL${RESET}."
     else
-        echo -e "  ${YELLOW}${ARROW} Skipping firewall configuration. Please open port $SQUID_PORT manually if needed.${RESET}"
+        log_warn "Skipping firewall configuration. Please open port ${BOLD}$SQUID_PORT${RESET} manually if needed."
     fi
 fi
 
@@ -603,9 +604,8 @@ step "Running verification tests"
 echo -e "  ${ARROW} Testing connectivity to New Relic endpoints (${NR_REGION^^})..."
 echo ""
 
-ansible-playbook verify.yml "${ANSIBLE_FLAGS[@]}" || true
-
-VERIFY_EXIT=$?
+VERIFY_EXIT=0
+ansible-playbook verify.yml "${ANSIBLE_FLAGS[@]}" || VERIFY_EXIT=$?
 
 # Cleanup
 rm -f "$VARS_FILE"
