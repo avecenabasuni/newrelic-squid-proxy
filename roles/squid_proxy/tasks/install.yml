@@ -6,7 +6,7 @@
     name: epel-release
     state: present
   when: ansible_os_family == "RedHat"
-  ignore_errors: true
+  failed_when: false
 
 - name: Install Squid
   ansible.builtin.package:

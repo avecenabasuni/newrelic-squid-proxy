@@ -23,4 +23,4 @@
   ansible.builtin.service:
     name: newrelic-infra
     state: restarted
-  ignore_errors: true  # graceful if NR agent is not yet installed
+  failed_when: false  # graceful if NR agent is not yet installed

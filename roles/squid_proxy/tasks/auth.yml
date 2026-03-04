@@ -22,6 +22,7 @@
   ansible.builtin.command:
     cmd: "htpasswd -cb {{ basic_auth_password_file }} {{ basic_auth_username }} {{ basic_auth_password }}"
   when: user_exists.rc != 0
+  changed_when: true
   notify: restart squid
   no_log: true
 
@@ -29,5 +30,6 @@
   ansible.builtin.command:
     cmd: "htpasswd -b {{ basic_auth_password_file }} {{ basic_auth_username }} {{ basic_auth_password }}"
   when: user_exists.rc == 0
+  changed_when: true
   notify: restart squid
   no_log: true

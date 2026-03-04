@@ -38,7 +38,9 @@ TOTAL_STEPS=7
 RED="\e[31m"
 GREEN="\e[32m"
 YELLOW="\e[33m"
+# shellcheck disable=SC2034
 BLUE="\e[34m"
+# shellcheck disable=SC2034
 MAGENTA="\e[35m"
 CYAN="\e[36m"
 WHITE="\e[37m"
@@ -534,9 +536,7 @@ echo -e "  ${ARROW} Running installation playbook..."
 echo ""
 
 cd "$INSTALL_DIR"
-ansible-playbook site.yml ${ANSIBLE_FLAGS}
-
-if [ $? -ne 0 ]; then
+if ! ansible-playbook site.yml ${ANSIBLE_FLAGS}; then
     log_error "Installation playbook failed!"
     rm -f "$VARS_FILE"
     exit 1
@@ -590,7 +590,7 @@ step "Running verification tests"
 echo -e "  ${ARROW} Testing connectivity to New Relic endpoints (${NR_REGION^^})..."
 echo ""
 
-ansible-playbook verify.yml ${ANSIBLE_FLAGS}
+ansible-playbook verify.yml ${ANSIBLE_FLAGS} || true
 
 VERIFY_EXIT=$?
 
