@@ -12,23 +12,9 @@ integrations:
       name: SquidProxyMetrics
       apis:
         - name: SquidCounters
-          url: "http://localhost:{{ squid_port }}/squid-internal-mgr/counters"
-          method: GET
+          commands:
+            - run: curl -s "http://localhost:{{ squid_port }}/squid-internal-mgr/counters" | awk -F" = " 'BEGIN {print "{"} /^[a-zA-Z_.]+ = [0-9.]+$/ {printf "\"%s\":%s,\n", $1, $2} END {print "\"status\":\"ok\"}"}'
           sample_name: SquidCounterSample
           custom_attributes:
             proxy_port: "{{ squid_port }}"
             proxy_host: "{{ ansible_fqdn | default(ansible_hostname) }}"
-          split: line
-          split_by: "="
-          set_header: ["metric_name", "metric_value"]
-
-        - name: SquidInfo
-          url: "http://localhost:{{ squid_port }}/squid-internal-mgr/info"
-          method: GET
-          sample_name: SquidInfoSample
-          custom_attributes:
-            proxy_port: "{{ squid_port }}"
-            proxy_host: "{{ ansible_fqdn | default(ansible_hostname) }}"
-          split: line
-          split_by: ":"
-          set_header: ["info_key", "info_value"]
