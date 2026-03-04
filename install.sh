@@ -256,26 +256,35 @@ fi
 log_step "Configuring Squid Proxy..."
 echo ""
 
-# Proxy port
-read -rp "$(echo -e "${BOLD}Proxy port${RESET} [default: 3128]: ")" SQUID_PORT
-SQUID_PORT="${SQUID_PORT:-3128}"
-
-# SSL Bump
-read -rp "$(echo -e "${BOLD}Enable SSL Bump?${RESET} (y/n) [default: n]: ")" SSL_BUMP_INPUT
+# Initialize all variables first (prevents unbound variable errors with set -u)
+SQUID_PORT=""
+SSL_BUMP_INPUT=""
 SSL_BUMP_ENABLED="false"
 SSL_BUMP_CERT_PATH=""
 SSL_BUMP_KEY_PATH=""
+AUTH_INPUT=""
+BASIC_AUTH_ENABLED="false"
+BASIC_AUTH_USERNAME=""
+BASIC_AUTH_PASSWORD=""
+
+# All reads use /dev/tty so they work when piped via: curl | bash
+# Proxy port
+read -rp "$(echo -e "${BOLD}Proxy port${RESET} [default: 3128]: ")" SQUID_PORT < /dev/tty
+SQUID_PORT="${SQUID_PORT:-3128}"
+
+# SSL Bump
+read -rp "$(echo -e "${BOLD}Enable SSL Bump?${RESET} (y/n) [default: n]: ")" SSL_BUMP_INPUT < /dev/tty
 
 if [[ "$SSL_BUMP_INPUT" =~ ^[Yy]$ ]]; then
     SSL_BUMP_ENABLED="true"
 
-    read -rp "  Path to CA certificate: " SSL_BUMP_CERT_PATH
+    read -rp "  Path to CA certificate: " SSL_BUMP_CERT_PATH < /dev/tty
     if [ ! -f "$SSL_BUMP_CERT_PATH" ]; then
         log_error "CA certificate not found: $SSL_BUMP_CERT_PATH"
         exit 1
     fi
 
-    read -rp "  Path to CA private key: " SSL_BUMP_KEY_PATH
+    read -rp "  Path to CA private key: " SSL_BUMP_KEY_PATH < /dev/tty
     if [ ! -f "$SSL_BUMP_KEY_PATH" ]; then
         log_error "CA private key not found: $SSL_BUMP_KEY_PATH"
         exit 1
@@ -283,21 +292,18 @@ if [[ "$SSL_BUMP_INPUT" =~ ^[Yy]$ ]]; then
 fi
 
 # Basic Auth
-read -rp "$(echo -e "${BOLD}Enable Basic Auth?${RESET} (y/n) [default: n]: ")" AUTH_INPUT
-BASIC_AUTH_ENABLED="false"
-BASIC_AUTH_USERNAME=""
-BASIC_AUTH_PASSWORD=""
+read -rp "$(echo -e "${BOLD}Enable Basic Auth?${RESET} (y/n) [default: n]: ")" AUTH_INPUT < /dev/tty
 
 if [[ "$AUTH_INPUT" =~ ^[Yy]$ ]]; then
     BASIC_AUTH_ENABLED="true"
 
-    read -rp "  Username: " BASIC_AUTH_USERNAME
+    read -rp "  Username: " BASIC_AUTH_USERNAME < /dev/tty
     if [ -z "$BASIC_AUTH_USERNAME" ]; then
         log_error "Username cannot be empty."
         exit 1
     fi
 
-    read -srp "  Password: " BASIC_AUTH_PASSWORD
+    read -srp "  Password: " BASIC_AUTH_PASSWORD < /dev/tty
     echo ""  # newline after hidden input
     if [ -z "$BASIC_AUTH_PASSWORD" ]; then
         log_error "Password cannot be empty."
@@ -328,7 +334,8 @@ else
 fi
 echo -e "${BOLD}${YELLOW}╠══════════════════════════════════════════════════╣${RESET}"
 
-read -rp "$(echo -e "${BOLD}${YELLOW}║${RESET}  Proceed with installation? (y/n): ")" PROCEED
+PROCEED=""
+read -rp "$(echo -e "${BOLD}${YELLOW}║${RESET}  Proceed with installation? (y/n): ")" PROCEED < /dev/tty
 echo -e "${BOLD}${YELLOW}╚══════════════════════════════════════════════════╝${RESET}"
 
 if [[ ! "$PROCEED" =~ ^[Yy]$ ]]; then
