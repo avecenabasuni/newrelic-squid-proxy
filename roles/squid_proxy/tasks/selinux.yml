@@ -1,0 +1,45 @@
+---
+# tasks/selinux.yml
+# Dipanggil eksklusif untuk RedHat-family (RHEL, CentOS, Rocky, Alma, Fedora)
+# memastikan bind port dan akses direktori berhasil jika SELinux Enforcing.
+
+- name: Set SELinux boolean 'squid_connect_any' to allow outbound connections
+  ansible.posix.seboolean:
+    name: squid_connect_any
+    state: true
+    persistent: true
+  ignore_errors: true # Ignore if seboolean package is not perfectly installed, though it's recommended
+  tags: ['selinux']
+
+- name: Allow Squid to bind to specific proxy port {{ squid_port }}
+  community.general.seport:
+    ports: "{{ squid_port }}"
+    proto: tcp
+    setype: squid_port_t
+    state: present
+  ignore_errors: true
+  tags: ['selinux']
+
+- name: Allow Squid to bind to SSL Bump port {{ ssl_bump_port }} if enabled
+  community.general.seport:
+    ports: "{{ ssl_bump_port }}"
+    proto: tcp
+    setype: squid_port_t
+    state: present
+  when: ssl_bump_enabled | bool
+  ignore_errors: true
+  tags: ['selinux']
+
+- name: Ensure SELinux context for Squid cache directory is correct
+  community.general.sefcontext:
+    target: '/var/spool/squid(/.*)?'
+    setype: squid_cache_t
+    state: present
+  ignore_errors: true
+  tags: ['selinux']
+
+- name: Apply new SELinux file context to cache directory
+  ansible.builtin.command: restorecon -Rv /var/spool/squid
+  changed_when: false
+  ignore_errors: true
+  tags: ['selinux']

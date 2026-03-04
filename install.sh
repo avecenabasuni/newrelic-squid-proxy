@@ -387,16 +387,30 @@ fi
 # ═══════════════════════════════════════════════════════════════════════════════
 step "Installing & configuring Squid"
 
-# Generate extra-vars JSON
-cat > "$VARS_FILE" <<EOF
+# 6. Generate Ansible variables (JSON untuk extra-vars)
+print_step "Generating configuration..."
+
+# Deteksi SELinux status (jika default enforcing di RedHat)
+SQUID_SELINUX_ENABLED="false"
+if [[ "$OS_FAMILY" == "rhel" ]]; then
+    if command -v getenforce >/dev/null 2>&1; then
+        SELINUX_STATUS=$(getenforce)
+        if [[ "$SELINUX_STATUS" == "Enforcing" || "$SELINUX_STATUS" == "Permissive" ]]; then
+            SQUID_SELINUX_ENABLED="true"
+        fi
+    fi
+fi
+
+cat <<EOF > /tmp/nr-squid-vars.json
 {
-    "squid_port": $SQUID_PORT,
-    "ssl_bump_enabled": $SSL_BUMP_ENABLED,
-    "ssl_bump_cert_path": "$SSL_BUMP_CERT_PATH",
-    "ssl_bump_key_path": "$SSL_BUMP_KEY_PATH",
-    "basic_auth_enabled": $BASIC_AUTH_ENABLED,
-    "basic_auth_username": "$BASIC_AUTH_USERNAME",
-    "basic_auth_password": "$BASIC_AUTH_PASSWORD"
+  "squid_port": ${SQUID_PORT},
+  "ssl_bump_enabled": ${SSL_BUMP_ENABLED},
+  "ssl_bump_cert_path": "${SSL_BUMP_CERT_PATH}",
+  "ssl_bump_key_path": "${SSL_BUMP_KEY_PATH}",
+  "basic_auth_enabled": ${BASIC_AUTH_ENABLED},
+  "basic_auth_username": "${BASIC_AUTH_USERNAME}",
+  "basic_auth_password": "${BASIC_AUTH_PASSWORD}",
+  "squid_selinux_enabled": ${SQUID_SELINUX_ENABLED}
 }
 EOF
 
