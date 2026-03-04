@@ -494,7 +494,7 @@ fi
 step "Installing & configuring Squid"
 
 # 6. Generate Ansible variables (JSON untuk extra-vars)
-print_step "Generating configuration..."
+echo -e "  ${ARROW} Generating configuration..."
 
 # Deteksi SELinux status (jika default enforcing di RedHat)
 SQUID_SELINUX_ENABLED="false"
