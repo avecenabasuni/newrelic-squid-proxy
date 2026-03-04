@@ -21,50 +21,9 @@ apt update && apt install -y ansible yamllint shellcheck curl net-tools
 
 ---
 
-## Phase 1: Static Analysis & Linting
+## Phase 1: Installation (Happy Path)
 
-### 1.1 YAML Lint
-
-```bash
-yamllint -d relaxed site.yml teardown.yml verify.yml \
-  roles/squid_proxy/defaults/main.yml \
-  roles/squid_proxy/tasks/*.yml \
-  roles/squid_proxy/vars/*.yml \
-  roles/squid_proxy/handlers/main.yml
-```
-
-**Expected:** Tidak ada error (warning boleh).
-
-### 1.2 ShellCheck
-
-```bash
-shellcheck install.sh uninstall.sh support-bundle.sh
-```
-
-**Expected:** Tidak ada error level `error`. Warning SC2034/SC2086 bisa di-ignore jika disengaja.
-
-### 1.3 Ansible Lint
-
-```bash
-ansible-lint site.yml
-```
-
-**Expected:** Tidak ada critical error. Warning deprecated module bisa di-note untuk perbaikan.
-
-### 1.4 Ansible Syntax Check
-
-```bash
-ansible-playbook site.yml --syntax-check
-ansible-playbook teardown.yml --syntax-check
-```
-
-**Expected:** `playbook: site.yml` dan `playbook: teardown.yml` tanpa error.
-
----
-
-## Phase 2: Installation (Happy Path)
-
-### 2.1 Run Installer
+### 1.1 Run Installer
 
 ```bash
 cd /root/newrelic-squid-proxy
@@ -85,107 +44,25 @@ Jawab prompt dengan konfigurasi berikut:
 
 **Expected:** Ansible playbook berjalan sampai selesai tanpa error merah.
 
-### 2.2 Verifikasi Service
+---
+
+## Phase 2: Automated Verification (Core Tests)
+
+Kami telah menyediakan script E2E otomatis untuk menguji konfigurasi, runtime, dan connectivity New Relic.
+Jalankan script ini:
 
 ```bash
-# Squid sedang berjalan?
-systemctl status squid
-# Expected: Active: active (running)
-
-# Listening di port 3128?
-ss -tulpn | grep 3128
-# Expected: LISTEN 0 ... *:3128
+cd /root/newrelic-squid-proxy
+sudo bash test.sh
 ```
 
-### 2.3 Verifikasi File Konfigurasi
-
-```bash
-# squid.conf valid
-squid -k parse
-# Expected: tidak ada error
-
-# Konfigurasi utama
-ls -la /etc/squid/squid.conf
-ls -la /etc/squid/allowed_domains.txt
-
-# NR Integration configs deployed
-ls -la /etc/newrelic-infra/logging.d/squid.yml
-ls -la /etc/newrelic-infra/integrations.d/squid-metrics.yml
-# Expected: kedua file ada (meskipun NR agent belum terinstall)
-```
+**Expected:** Script akan memvalidasi linting, runtime Squid, port binding, HTTP tunneling API, domain blocking, dan integrasi NR Infra. Semua baris harus menunjukkan `[PASS]`.
 
 ---
 
-## Phase 3: E2E Connectivity
+## Phase 3: Feature-Specific Tests
 
-### 3.1 Proxy ke New Relic US Endpoints
-
-```bash
-# Test CONNECT tunnel ke log-api.newrelic.com
-curl -v -x http://localhost:3128 https://log-api.newrelic.com/log/v1 2>&1 | head -30
-# Expected: "HTTP/1.1 200 Connection established" atau respons dari NR API
-
-# Test metric-api
-curl -s -o /dev/null -w "%{http_code}" -x http://localhost:3128 https://metric-api.newrelic.com/metric/v1
-# Expected: 202 atau 403 (NR rejects tanpa license key, tapi proxy CONNECT berhasil)
-
-# Test infra-api
-curl -s -o /dev/null -w "%{http_code}" -x http://localhost:3128 https://infra-api.newrelic.com
-# Expected: bukan 503 (artinya domain diterima oleh ACL)
-```
-
-### 3.2 Blocked Domains
-
-```bash
-# Domain non-New Relic harus DITOLAK
-curl -s -o /dev/null -w "%{http_code}" -x http://localhost:3128 https://www.google.com
-# Expected: 403 (Access Denied)
-
-curl -s -o /dev/null -w "%{http_code}" -x http://localhost:3128 https://github.com
-# Expected: 403 (Access Denied)
-```
-
-### 3.3 Region-Aware Blocking (N1)
-
-Karena `nr_region=us`, endpoint EU harus DITOLAK:
-
-```bash
-curl -s -o /dev/null -w "%{http_code}" -x http://localhost:3128 https://log-api.eu.newrelic.com/log/v1
-# Expected: 403 (EU endpoint diblokir saat region=us)
-
-curl -s -o /dev/null -w "%{http_code}" -x http://localhost:3128 https://metric-api.eu.newrelic.com/metric/v1
-# Expected: 403
-```
-
-### 3.4 Manager Metrics Access (N4)
-
-```bash
-# Akses cache manager dari localhost
-curl -s http://localhost:3128/squid-internal-mgr/counters | head -20
-# Expected: output key=value seperti:
-#   client_http.requests = 5
-#   client_http.hits = 0
-#   server.all.requests = 3
-
-curl -s http://localhost:3128/squid-internal-mgr/info | head -20
-# Expected: output key:value seperti:
-#   Squid Object Cache: Version X.X
-#   Number of clients accessing cache: 1
-```
-
-### 3.5 Access Log Verification
-
-```bash
-# Setelah semua curl di atas, cek access log
-tail -20 /var/log/squid/access.log
-# Expected: entry untuk setiap request (TCP_TUNNEL/200 untuk allowed, TCP_DENIED/403 untuk blocked)
-```
-
----
-
-## Phase 4: Feature-Specific Tests
-
-### 4.1 SSL Bump (M5) - Optional
+### 3.1 SSL Bump (M5) - Optional
 
 Hanya jika install ulang dengan SSL Bump enabled:
 
@@ -212,7 +89,7 @@ crontab -l | grep rotate-squid-ca
 # Expected: ada entry "0 3 * * * /usr/local/bin/rotate-squid-ca.sh"
 ```
 
-### 4.2 Basic Auth - Optional
+### 3.2 Basic Auth - Optional
 
 Hanya jika install ulang dengan Basic Auth enabled:
 
@@ -230,7 +107,7 @@ curl -s -o /dev/null -w "%{http_code}" -x http://user:password@localhost:3128 ht
 # Expected: 200 (Connection established)
 ```
 
-### 4.3 Firewall Auto-Open (N2)
+### 3.3 Firewall Auto-Open (N2)
 
 ```bash
 # Cek apakah port sudah dibuka
@@ -245,9 +122,9 @@ iptables -L -n | grep 3128
 
 ---
 
-## Phase 5: Uninstall & Rollback
+## Phase 4: Uninstall & Rollback
 
-### 5.1 Run Uninstaller
+### 4.1 Run Uninstaller
 
 ```bash
 cd /root/newrelic-squid-proxy
@@ -320,19 +197,16 @@ squid -k parse
 ## Checklist Summary
 
 | # | Test | Status |
-|---|------|--------|
-| 1.1 | YAML Lint | [ ] |
-| 1.2 | ShellCheck | [ ] |
-| 1.3 | Ansible Lint | [ ] |
-| 1.4 | Syntax Check | [ ] |
+| --- | ------ | -------- |
+| 1.1 | Linting (yamllint, ansible-lint, shellcheck) | [ ] |
+| 1.2 | Ansible Syntax Check | [ ] |
 | 2.1 | Install Happy Path | [ ] |
 | 2.2 | Service Running | [ ] |
 | 2.3 | Config Files Exist | [ ] |
 | 3.1 | Proxy to NR US | [ ] |
 | 3.2 | Blocked Domains | [ ] |
-| 3.3 | EU Region Blocked | [ ] |
-| 3.4 | Manager Metrics | [ ] |
-| 3.5 | Access Logs | [ ] |
+| 3.3 | Manager Metrics /counters | [ ] |
+| 3.4 | NR Infra Agent Integration deployed | [ ] |
 | 4.1 | SSL Bump (opt) | [ ] |
 | 4.2 | Basic Auth (opt) | [ ] |
 | 4.3 | Firewall Open | [ ] |
