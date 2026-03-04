@@ -6,7 +6,7 @@
 
 Automated installation and configuration of **Squid Proxy** to support New Relic POCs in environments requiring a forward proxy.
 
----
+
 
 ## 💡 Motivation & Problem Statement
 
@@ -29,7 +29,7 @@ Manually setting up Squid Proxy is a repetitive and error-prone process involvin
 | **SSL Bump** | High Complexity | **Full Auto-Generation** |
 | **Verification** | Manual `curl` Tests | **Automated 32+ Checks** |
 
----
+
 
 ## ✨ Features
 
@@ -43,7 +43,7 @@ Manually setting up Squid Proxy is a repetitive and error-prone process involvin
 - **SELinux Aware** - Auto-configures contexts on RHEL-based systems.
 - **Verification Engine** - Built-in connectivity tests for all target endpoints.
 
----
+
 
 ## 🛠️ Quick Start
 
@@ -71,7 +71,7 @@ cd newrelic-squid-proxy
 sudo bash install.sh
 ```
 
----
+
 
 ## ⚙️ Configuration
 
@@ -86,7 +86,7 @@ All configuration is handled via interactive prompts during installation:
 | Cache Peer | `disabled` | Chain to an upstream corporate proxy |
 | NR Integration | `disabled` | Deploy Flex metrics & Log forwarding configs |
 
----
+
 
 ## 📈 Dashboarding
 
@@ -97,7 +97,7 @@ If **NR Integration** is enabled, you can import the provided `dashboard.json` i
 - Peak Memory Usage
 - Forwarded Access Logs
 
----
+
 
 ## 🧹 Housekeeping & Support
 
@@ -115,7 +115,7 @@ If you encounter issues, generate a support archive for troubleshooting:
 sudo bash support-bundle.sh
 ```
 
----
+
 
 ## 📁 Project Structure
 
@@ -132,11 +132,11 @@ sudo bash support-bundle.sh
 └── legacy/docs/                # Project design & roadmap documents
 ```
 
----
+
 
 ## 📜 License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
----
+
 *Created by **Avecena Basuni** to simplify New Relic observability adoption.*
