@@ -108,7 +108,7 @@ echo -e "\n" >> "$BUNDLE_DIR/nr-connectivity.txt"
 
 # Test via Squid local
 echo "2. VIA LOCAL SQUID PROXY (Port ${SQUID_PORT})" >> "$BUNDLE_DIR/nr-connectivity.txt"
-curl $PROXY_ARG -s -o /dev/null -w "%{http_code}" https://infra-api.newrelic.com --connect-timeout 5 >> "$BUNDLE_DIR/nr-connectivity.txt" 2>&1 || echo "FAILED" >> "$BUNDLE_DIR/nr-connectivity.txt"
+curl "$PROXY_ARG" -s -o /dev/null -w "%{http_code}" https://infra-api.newrelic.com --connect-timeout 5 >> "$BUNDLE_DIR/nr-connectivity.txt" 2>&1 || echo "FAILED" >> "$BUNDLE_DIR/nr-connectivity.txt"
 echo -e "\n" >> "$BUNDLE_DIR/nr-connectivity.txt"
 
 # ─── 7. Archive & Cleanup ──────────────────────────────────────────────────

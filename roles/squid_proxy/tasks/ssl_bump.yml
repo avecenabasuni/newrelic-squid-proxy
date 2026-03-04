@@ -21,6 +21,7 @@
       -subj "/C=US/ST=State/L=City/O=New Relic Squid Proxy/CN=NewRelic-Squid-Proxy-CA"
       -keyout {{ ssl_bump_key_dest }} -out {{ ssl_bump_cert_dest }}
   when: ssl_bump_auto_generate and not ca_cert_stat.stat.exists
+  changed_when: true
   notify: restart squid
 
 - name: Ensure correct permissions for auto-generated CA cert
@@ -75,6 +76,7 @@
   ansible.builtin.command:
     cmd: "{{ squid_certgen_path }} -c -s {{ ssl_bump_db_path }} -M 4MB"
   when: not ssl_db_stat.stat.exists
+  changed_when: true
 
 - name: Set SSL DB ownership
   ansible.builtin.file:

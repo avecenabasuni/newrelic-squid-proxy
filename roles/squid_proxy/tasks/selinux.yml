@@ -8,7 +8,7 @@
     name: squid_connect_any
     state: true
     persistent: true
-  ignore_errors: true # Ignore if seboolean package is not perfectly installed, though it's recommended
+  failed_when: false # Ignore if seboolean package is not perfectly installed, though it's recommended
   tags: ['selinux']
 
 - name: Allow Squid to bind to specific proxy port {{ squid_port }}
@@ -17,17 +17,17 @@
     proto: tcp
     setype: squid_port_t
     state: present
-  ignore_errors: true
+  failed_when: false
   tags: ['selinux']
 
-- name: Allow Squid to bind to SSL Bump port {{ ssl_bump_port }} if enabled
+- name: "Allow Squid to bind to SSL Bump port if enabled: {{ ssl_bump_port }}"
   community.general.seport:
     ports: "{{ ssl_bump_port }}"
     proto: tcp
     setype: squid_port_t
     state: present
   when: ssl_bump_enabled | bool
-  ignore_errors: true
+  failed_when: false
   tags: ['selinux']
 
 - name: Ensure SELinux context for Squid cache directory is correct
@@ -35,11 +35,11 @@
     target: '/var/spool/squid(/.*)?'
     setype: squid_cache_t
     state: present
-  ignore_errors: true
+  failed_when: false
   tags: ['selinux']
 
 - name: Apply new SELinux file context to cache directory
   ansible.builtin.command: restorecon -Rv /var/spool/squid
   changed_when: false
-  ignore_errors: true
+  failed_when: false
   tags: ['selinux']

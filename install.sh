@@ -127,6 +127,7 @@ OS_VERSION=""
 PKG_MANAGER=""
 
 if [ -f /etc/os-release ]; then
+    # shellcheck disable=SC1091
     . /etc/os-release
     OS_ID="${ID:-unknown}"
     OS_VERSION="${VERSION_ID:-unknown}"
@@ -536,7 +537,7 @@ echo -e "  ${ARROW} Running installation playbook..."
 echo ""
 
 cd "$INSTALL_DIR"
-if ! ansible-playbook site.yml ${ANSIBLE_FLAGS}; then
+if ! ansible-playbook site.yml "${ANSIBLE_FLAGS}"; then
     log_error "Installation playbook failed!"
     rm -f "$VARS_FILE"
     exit 1
@@ -590,7 +591,7 @@ step "Running verification tests"
 echo -e "  ${ARROW} Testing connectivity to New Relic endpoints (${NR_REGION^^})..."
 echo ""
 
-ansible-playbook verify.yml ${ANSIBLE_FLAGS} || true
+ansible-playbook verify.yml "${ANSIBLE_FLAGS}" || true
 
 VERIFY_EXIT=$?
 
