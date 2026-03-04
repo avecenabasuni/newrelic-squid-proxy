@@ -527,9 +527,9 @@ cat <<EOF > /tmp/nr-squid-vars.json
 EOF
 
 # Build ansible-playbook flags
-ANSIBLE_FLAGS="--extra-vars @${VARS_FILE}"
+ANSIBLE_FLAGS=("--extra-vars" "@${VARS_FILE}")
 if [ "$DRY_RUN" = "true" ]; then
-    ANSIBLE_FLAGS="${ANSIBLE_FLAGS} --check --diff"
+    ANSIBLE_FLAGS+=("--check" "--diff")
     echo -e "  ${YELLOW}⚡ DRY RUN — Running with --check --diff (no changes applied)${RESET}"
 fi
 
@@ -537,7 +537,7 @@ echo -e "  ${ARROW} Running installation playbook..."
 echo ""
 
 cd "$INSTALL_DIR"
-if ! ansible-playbook site.yml "${ANSIBLE_FLAGS}"; then
+if ! ansible-playbook site.yml "${ANSIBLE_FLAGS[@]}"; then
     log_error "Installation playbook failed!"
     rm -f "$VARS_FILE"
     exit 1
@@ -591,7 +591,7 @@ step "Running verification tests"
 echo -e "  ${ARROW} Testing connectivity to New Relic endpoints (${NR_REGION^^})..."
 echo ""
 
-ansible-playbook verify.yml "${ANSIBLE_FLAGS}" || true
+ansible-playbook verify.yml "${ANSIBLE_FLAGS[@]}" || true
 
 VERIFY_EXIT=$?
 
