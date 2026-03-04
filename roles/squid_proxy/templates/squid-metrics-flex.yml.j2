@@ -18,3 +18,11 @@ integrations:
           custom_attributes:
             proxy_port: "{{ squid_port }}"
             proxy_host: "{{ ansible_fqdn | default(ansible_hostname) }}"
+
+        - name: SquidInfo
+          commands:
+            - run: curl -s "http://localhost:{{ squid_port }}/squid-internal-mgr/info" | awk -F':' 'BEGIN {print "{"} /^[ \t]*([^:]+):[ \t]*([0-9.]+)[^0-9]*$/ { key=$1; sub(/^[ \t]+/, "", key); val=$2; sub(/^[ \t]+/, "", val); sub(/[^0-9.].*$/, "", val); printf "\"%s\":%s,\n", key, val } END {print "\"status\":\"ok\"}"}'
+          sample_name: SquidInfoSample
+          custom_attributes:
+            proxy_port: "{{ squid_port }}"
+            proxy_host: "{{ ansible_fqdn | default(ansible_hostname) }}"
