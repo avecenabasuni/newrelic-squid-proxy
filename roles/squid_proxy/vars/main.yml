@@ -1,28 +1,21 @@
 ---
 # ─── New Relic Allowed Domains ─────────────────
+# NOTE: Squid 6.x is strict about subdomain overlaps.
+#       If ".newrelic.com" is listed, do NOT also list "api.newrelic.com"
+#       (it's already covered by the wildcard). Same for other wildcards.
 newrelic_domains:
   - ".newrelic.com"
-  - ".eu.newrelic.com"
   - ".nr-data.net"
-  - "download.newrelic.com"
-  - "api.newrelic.com"
-  - "infra-api.newrelic.com"
-  - "identity-api.newrelic.com"
-  - "infrastructure-command-api.newrelic.com"
-  - "nr-downloads-main.s3.us-east-1.amazonaws.com"
 
 # ─── OS Repo Domains (agar installer NR bisa pull packages) ──
 os_repo_domains:
   - ".ubuntu.com"
   - ".debian.org"
-  - ".security.debian.org"
   - ".rockylinux.org"
   - ".almalinux.org"
   - ".centos.org"
   - ".fedoraproject.org"
   - ".rpmfusion.org"
-  - ".epel.mirror"
-  - ".dl.fedoraproject.org"
   - ".amazonaws.com"
   - ".cloudfront.net"
   - ".opensuse.org"
