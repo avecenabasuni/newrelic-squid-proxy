@@ -6,6 +6,10 @@
 
 Automated installation and configuration of **Squid Proxy** to support New Relic POCs. This project reduces repetitive manual setup tasks by automating the entire lifecycle—from OS detection to final endpoint verification—into a single command.
 
+## 🏗️ Architecture
+
+![Network Topology](assets/topology.png)
+
 ## ✨ Features
 
 - **One-liner install** - `curl -sSL <URL>/install.sh | sudo bash`
