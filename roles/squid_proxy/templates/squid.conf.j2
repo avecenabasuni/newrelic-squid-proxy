@@ -37,8 +37,17 @@ acl newrelic_sni ssl::server_name \
 {% endfor %}
 
 {% endif %}
+###########################################################
+# [3] MANAGER/METRICS ACCESS (Untuk New Relic monitoring) #
+###########################################################
+
+# Izinkan akses manager (metrics) dari localhost
+acl manager url_regex -i ^cache_object:// /squid-internal-mgr/
+http_access allow manager localhost
+http_access deny manager
+
 #########################################
-# [3] FILTER SAFETY & BASIC PROTECTION  #
+# [4] FILTER SAFETY & BASIC PROTECTION  #
 #########################################
 
 # Tolak request ke port yang tidak aman + CONNECT selain 443
@@ -48,15 +57,6 @@ http_access deny CONNECT !SSL_ports
 # Proteksi service lokal & link-local pada host proxy
 http_access deny to_localhost
 http_access deny to_linklocal
-
-###########################################################
-# [4] MANAGER/METRICS ACCESS (Untuk New Relic monitoring) #
-###########################################################
-
-# Izinkan akses manager (metrics) dari localhost
-acl manager url_regex -i ^cache_object:// /squid-internal-mgr/
-http_access allow manager localhost
-http_access deny manager
 
 ##############################################
 # [5] KEBIJAKAN AKSES (URUTAN PENTING/FINAL) #
