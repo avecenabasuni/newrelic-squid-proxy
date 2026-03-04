@@ -6,13 +6,12 @@
 
 Automated installation and configuration of **Squid Proxy** to support New Relic POCs in environments requiring a forward proxy.
 
-
-
 ## 💡 Motivation & Problem Statement
 
-Conducting a Proof of Concept (POC) for New Relic in strict enterprise environments often requires a **forward proxy** to allow agents to reach ingest endpoints. 
+Conducting a Proof of Concept (POC) for New Relic in strict enterprise environments often requires a **forward proxy** to allow agents to reach ingest endpoints.
 
 Manually setting up Squid Proxy is a repetitive and error-prone process involving:
+
 - Manual package installation and service management.
 - Complex configuration of SSL Bump (MITM) for TLS inspection.
 - Precise domain whitelisting for 30+ New Relic endpoints.
@@ -29,8 +28,6 @@ Manually setting up Squid Proxy is a repetitive and error-prone process involvin
 | **SSL Bump** | High Complexity | **Full Auto-Generation** |
 | **Verification** | Manual `curl` Tests | **Automated 32+ Checks** |
 
-
-
 ## ✨ Features
 
 - **One-liner install** - `curl -sSL <URL>/install.sh | sudo bash`
@@ -43,8 +40,6 @@ Manually setting up Squid Proxy is a repetitive and error-prone process involvin
 - **SELinux Aware** - Auto-configures contexts on RHEL-based systems.
 - **Verification Engine** - Built-in connectivity tests for all target endpoints.
 
-
-
 ## 🛠️ Quick Start
 
 ### Automated Installation (Recommended)
@@ -54,6 +49,7 @@ curl -sSL https://raw.githubusercontent.com/avecenabasuni/newrelic-squid-proxy/m
 ```
 
 The script will automatically:
+
 1. Detect OS and package manager.
 2. Install Ansible (`ansible-core >= 2.14`) if not present.
 3. Display interactive configuration prompts.
@@ -71,8 +67,6 @@ cd newrelic-squid-proxy
 sudo bash install.sh
 ```
 
-
-
 ## ⚙️ Configuration
 
 All configuration is handled via interactive prompts during installation:
@@ -86,18 +80,15 @@ All configuration is handled via interactive prompts during installation:
 | Cache Peer | `disabled` | Chain to an upstream corporate proxy |
 | NR Integration | `disabled` | Deploy Flex metrics & Log forwarding configs |
 
-
-
 ## 📈 Dashboarding
 
 If **NR Integration** is enabled, you can import the provided `dashboard.json` into your New Relic account to monitor:
+
 - Total HTTP Requests (Client vs. Server)
 - Cache Hit Ratio
 - Active Connections
 - Peak Memory Usage
 - Forwarded Access Logs
-
-
 
 ## 🧹 Housekeeping & Support
 
@@ -115,8 +106,6 @@ If you encounter issues, generate a support archive for troubleshooting:
 sudo bash support-bundle.sh
 ```
 
-
-
 ## 📁 Project Structure
 
 ```text
@@ -132,11 +121,8 @@ sudo bash support-bundle.sh
 └── legacy/docs/                # Project design & roadmap documents
 ```
 
-
-
 ## 📜 License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
 
 *Created by **Avecena Basuni** to simplify New Relic observability adoption.*
