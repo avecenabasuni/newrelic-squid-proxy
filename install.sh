@@ -5,13 +5,27 @@
 # License: MIT License
 #
 # Usage:
-#   curl -sSL https://raw.githubusercontent.com/avecenabasuni/newrelic-squid-proxy/main/install.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/avecenabasuni/newrelic-squid-proxy/main/install.sh | sudo bash
+#
+# Dry-run (preview changes without applying):
+#   sudo bash install.sh --dry-run
 #
 # Override repo URL:
 #   REPO_URL=https://github.com/my-fork/newrelic-squid-proxy.git bash install.sh
 # ═══════════════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
+
+# ─── Dry-run Mode ─────────────────────────────────────────────────────────────
+# Usage: bash install.sh --dry-run
+# Simulates all changes without applying them.
+# Ansible is run with --check --diff so no packages are installed or configs changed.
+DRY_RUN=false
+for arg in "$@"; do
+    if [[ "$arg" == "--dry-run" || "$arg" == "-n" ]]; then
+        DRY_RUN=true
+    fi
+done
 
 # ─── Configurable Repository Source ───────────────────────────────────────────
 REPO_URL="${REPO_URL:-https://github.com/avecenabasuni/newrelic-squid-proxy.git}"
@@ -76,6 +90,11 @@ banner() {
     echo "  ║                                                           ║"
     echo "  ╚═══════════════════════════════════════════════════════════╝"
     echo -e "${RESET}"
+    if [ "$DRY_RUN" = "true" ]; then
+        echo -e "  ${BOLD}${YELLOW}  ⚡ DRY RUN MODE — No changes will be applied to this system.${RESET}"
+        echo -e "  ${DIM}  Ansible will run with --check --diff to simulate all tasks.${RESET}"
+        echo ""
+    fi
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -86,9 +105,13 @@ banner
 step "Checking prerequisites"
 
 if [ "$(id -u)" -ne 0 ]; then
-    log_error "This script must be run as root or with sudo."
-    echo -e "  ${GRAY}Usage: sudo bash install.sh${RESET}"
-    exit 1
+    if [ "$DRY_RUN" = "true" ]; then
+        log_warn "Not running as root — in dry-run mode, some Ansible tasks may show as failed."
+    else
+        log_error "This script must be run as root or with sudo."
+        echo -e "  ${GRAY}Usage: sudo bash install.sh${RESET}"
+        exit 1
+    fi
 fi
 log_info "Running as ${BOLD}root${RESET}"
 
@@ -446,11 +469,18 @@ cat <<EOF > /tmp/nr-squid-vars.json
 }
 EOF
 
+# Build ansible-playbook flags
+ANSIBLE_FLAGS="--extra-vars @${VARS_FILE}"
+if [ "$DRY_RUN" = "true" ]; then
+    ANSIBLE_FLAGS="${ANSIBLE_FLAGS} --check --diff"
+    echo -e "  ${YELLOW}⚡ DRY RUN — Running with --check --diff (no changes applied)${RESET}"
+fi
+
 echo -e "  ${ARROW} Running installation playbook..."
 echo ""
 
 cd "$INSTALL_DIR"
-ansible-playbook site.yml --extra-vars "@${VARS_FILE}"
+ansible-playbook site.yml ${ANSIBLE_FLAGS}
 
 if [ $? -ne 0 ]; then
     log_error "Installation playbook failed!"
@@ -469,7 +499,7 @@ step "Running verification tests"
 echo -e "  ${ARROW} Testing connectivity to New Relic endpoints..."
 echo ""
 
-ansible-playbook verify.yml --extra-vars "@${VARS_FILE}"
+ansible-playbook verify.yml ${ANSIBLE_FLAGS}
 
 VERIFY_EXIT=$?
 
@@ -549,8 +579,14 @@ separator
 echo -e "  ${GRAY}# Re-run installation${RESET}"
 echo -e "  ${GREEN}cd ${INSTALL_DIR} && ansible-playbook site.yml --extra-vars @vars.json${RESET}"
 echo ""
+echo -e "  ${GRAY}# Dry-run — preview changes without applying${RESET}"
+echo -e "  ${GREEN}sudo bash install.sh --dry-run${RESET}"
+echo ""
 echo -e "  ${GRAY}# Re-run verification only${RESET}"
 echo -e "  ${GREEN}cd ${INSTALL_DIR} && ansible-playbook verify.yml --extra-vars @vars.json${RESET}"
+echo ""
+echo -e "  ${GRAY}# Uninstall${RESET}"
+echo -e "  ${GREEN}sudo bash uninstall.sh${RESET}"
 echo ""
 echo -e "  ${GRAY}# Check Squid status${RESET}"
 echo -e "  ${GREEN}systemctl status squid${RESET}"
