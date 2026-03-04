@@ -3,7 +3,7 @@
 Berikut adalah beberapa ide fitur tambahan yang bisa diimplementasikan ke depannya untuk membuat `newrelic-squid-proxy` menjadi lebih robust dan enterprise-ready:
 
 ## 1. Observabilitas (Monitoring & Logging)
-*   **Squid Metrics Exporter**: Mengotomatisasi instalasi dan konfigurasi `squid-exporter` (Prometheus format) dan mengkonfigurasi New Relic Infrastructure Agent untuk melakukan scraping metrik tersebut. Ini memungkinkan pemantauan performa proxy (cache hits, koneksi, traffic) langsung dari dashboard New Relic.
+*   **Squid Metrics Exporter**: Mengotomatisasi pemantauan performa proxy (cache hits, koneksi, traffic) ke New Relic. Meskipun bisa menggunakan exporter dengan format Prometheus, sebenarnya **tidak wajib**. New Relic Infrastructure Agent memiliki native **SNMP Integration** yang bisa langsung men-query metrik internal Squid (Squid SNMP agent) tanpa perlu third-party exporter tambahan.
 *   **Log Forwarding**: Mengkonfigurasi Filebeat, Fluent Bit, atau New Relic Agent untuk mengirimkan `access.log` dan `cache.log` dari Squid langsung ke **New Relic Logs**, memungkinkan analisis traffic pattern dan error tracking terpusat.
 
 ## 2. Arsitektur & Deployment
