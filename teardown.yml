@@ -1,0 +1,82 @@
+---
+# teardown.yml — New Relic Squid Proxy Uninstaller
+# Menghapus semua komponen yang diinstall oleh site.yml secara bersih dan idempoten.
+#
+# Usage:
+#   ansible-playbook teardown.yml
+
+- name: Uninstall New Relic Squid Proxy
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Load OS-specific variables
+      ansible.builtin.include_vars: "roles/squid_proxy/vars/{{ ansible_os_family }}.yml"
+
+  tasks:
+    # 1. Stop and disable the Squid service
+    - name: Stop and disable Squid service
+      ansible.builtin.systemd:
+        name: "{{ squid_service_name }}"
+        state: stopped
+        enabled: false
+      ignore_errors: true
+
+    # 2. Remove Squid and auth packages
+    - name: Remove Squid package (apt)
+      ansible.builtin.apt:
+        name:
+          - "{{ squid_package_name }}"
+          - "{{ squid_auth_package }}"
+          - squid-openssl
+        state: absent
+        purge: true
+        autoremove: true
+      when: ansible_os_family == "Debian"
+      ignore_errors: true
+
+    - name: Remove Squid package (yum/dnf/zypper)
+      ansible.builtin.package:
+        name:
+          - "{{ squid_package_name }}"
+          - "{{ squid_auth_package }}"
+        state: absent
+      when: ansible_os_family != "Debian"
+      ignore_errors: true
+
+    # 3. Remove all Squid config, logs, SSL certs, and cache
+    - name: Remove Squid configuration directory
+      ansible.builtin.file:
+        path: /etc/squid
+        state: absent
+
+    - name: Remove Squid log directory
+      ansible.builtin.file:
+        path: /var/log/squid
+        state: absent
+
+    - name: Remove Squid cache/spool directory
+      ansible.builtin.file:
+        path: /var/spool/squid
+        state: absent
+
+    - name: Remove Squid SSL DB directory
+      ansible.builtin.file:
+        path: /var/lib/squid
+        state: absent
+
+    # 4. Remove temporary installer vars file
+    - name: Remove Ansible extra-vars file
+      ansible.builtin.file:
+        path: /tmp/nr-squid-vars.json
+        state: absent
+      ignore_errors: true
+
+    # 5. Summary
+    - name: Uninstall complete
+      ansible.builtin.debug:
+        msg: >-
+          ✔ New Relic Squid Proxy has been fully removed.
+          Packages, config, logs, cache, and SSL certs have been cleaned up.
