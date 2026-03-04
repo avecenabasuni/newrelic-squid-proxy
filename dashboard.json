@@ -1,23 +1,11 @@
 {
   "name": "Squid Proxy Monitoring",
-  "description": "Real-time observability dashboard for Squid forward proxy \u2014 powered by nri-flex Cache Manager integration",
+  "description": "Real-time observability dashboard for Squid forward proxy \u2014 powered by nri-flex Cache Manager integration and Log Forwarding",
   "permissions": "PUBLIC_READ_WRITE",
-  "variables": [
-    {
-      "name": "proxy_host",
-      "title": "Proxy Host",
-      "type": "NRQL",
-      "nrqlQuery": {
-        "accountIds": [],
-        "query": "SELECT uniques(proxy_host) FROM SquidCountersSample"
-      },
-      "replacementStrategy": "DEFAULT"
-    }
-  ],
   "pages": [
     {
       "name": "Overview",
-      "description": "Core proxy health and traffic metrics",
+      "description": "Core proxy health, traffic metrics, and logs",
       "widgets": [
         {
           "title": "Total HTTP Requests",
@@ -27,7 +15,7 @@
             "facet": { "showOtherSeries": false },
             "nrqlQueries": [
               {
-                "accountIds": [],
+                "accountId": 0,
                 "query": "SELECT latest(client_http.requests) AS 'Client Requests', latest(server.all.requests) AS 'Server Requests' FROM SquidCountersSample SINCE 30 minutes ago"
               }
             ],
@@ -42,7 +30,7 @@
             "facet": { "showOtherSeries": false },
             "nrqlQueries": [
               {
-                "accountIds": [],
+                "accountId": 0,
                 "query": "SELECT latest(client_http.errors) AS 'Client Errors', latest(server.all.errors) AS 'Server Errors', latest(aborted_requests) AS 'Aborted' FROM SquidCountersSample SINCE 30 minutes ago"
               }
             ],
@@ -61,7 +49,7 @@
             "facet": { "showOtherSeries": false },
             "nrqlQueries": [
               {
-                "accountIds": [],
+                "accountId": 0,
                 "query": "SELECT latest(`Number of clients accessing cache`) AS 'Active Clients', latest(`Average HTTP requests per minute since start`) AS 'Req/min Avg' FROM SquidInfoSample SINCE 30 minutes ago"
               }
             ],
@@ -76,7 +64,7 @@
             "facet": { "showOtherSeries": false },
             "nrqlQueries": [
               {
-                "accountIds": [],
+                "accountId": 0,
                 "query": "SELECT latest(`UP Time`) / 3600 AS 'Uptime (hours)' FROM SquidInfoSample SINCE 30 minutes ago"
               }
             ],
@@ -93,7 +81,7 @@
             "yAxisLeft": { "zero": true },
             "nrqlQueries": [
               {
-                "accountIds": [],
+                "accountId": 0,
                 "query": "SELECT latest(client_http.requests) AS 'Client Requests', latest(server.all.requests) AS 'Server Requests' FROM SquidCountersSample TIMESERIES AUTO SINCE 1 hour ago"
               }
             ],
@@ -109,7 +97,7 @@
             "legend": { "enabled": true },
             "nrqlQueries": [
               {
-                "accountIds": [],
+                "accountId": 0,
                 "query": "SELECT latest(client_http.kbytes_in) AS 'Client KB In', latest(client_http.kbytes_out) AS 'Client KB Out', latest(server.all.kbytes_in) AS 'Server KB In', latest(server.all.kbytes_out) AS 'Server KB Out' FROM SquidCountersSample TIMESERIES AUTO SINCE 1 hour ago"
               }
             ],
@@ -131,7 +119,7 @@
             },
             "nrqlQueries": [
               {
-                "accountIds": [],
+                "accountId": 0,
                 "query": "SELECT latest(client_http.errors) AS 'Client Errors', latest(server.all.errors) AS 'Server Errors', latest(aborted_requests) AS 'Aborted' FROM SquidCountersSample TIMESERIES AUTO SINCE 1 hour ago"
               }
             ],
@@ -147,7 +135,7 @@
             "legend": { "enabled": true },
             "nrqlQueries": [
               {
-                "accountIds": [],
+                "accountId": 0,
                 "query": "SELECT latest(`CPU Usage`) AS 'CPU %', latest(`CPU Usage, 5 minute avg`) AS 'CPU 5m Avg', latest(`CPU Usage, 60 minute avg`) AS 'CPU 60m Avg' FROM SquidInfoSample TIMESERIES AUTO SINCE 1 hour ago"
               }
             ],
@@ -163,7 +151,7 @@
             "legend": { "enabled": true },
             "nrqlQueries": [
               {
-                "accountIds": [],
+                "accountId": 0,
                 "query": "SELECT latest(`Maximum Resident Size`) AS 'RSS (KB)', latest(`Storage Mem size`) AS 'Cache Mem (KB)', latest(`Storage Swap size`) AS 'Cache Swap (KB)' FROM SquidInfoSample TIMESERIES AUTO SINCE 1 hour ago"
               }
             ],
@@ -178,7 +166,7 @@
             "facet": { "showOtherSeries": false },
             "nrqlQueries": [
               {
-                "accountIds": [],
+                "accountId": 0,
                 "query": "SELECT latest(`Number of file desc currently in use`) AS 'In Use', latest(`Available number of file descriptors`) AS 'Available', latest(`Reserved number of file descriptors`) AS 'Reserved' FROM SquidInfoSample SINCE 30 minutes ago"
               }
             ],
@@ -186,16 +174,15 @@
           }
         },
         {
-          "title": "ICP / Cache Digest Activity",
+          "title": "Squid Log Volume (access/cache)",
           "layout": { "column": 5, "row": 10, "width": 4, "height": 3 },
           "visualization": { "id": "viz.line" },
           "rawConfiguration": {
             "facet": { "showOtherSeries": false },
-            "legend": { "enabled": true },
             "nrqlQueries": [
               {
-                "accountIds": [],
-                "query": "SELECT latest(icp.pkts_sent) AS 'ICP Sent', latest(icp.pkts_recv) AS 'ICP Recv', latest(cd.msgs_sent) AS 'CD Sent', latest(cd.msgs_recv) AS 'CD Recv' FROM SquidCountersSample TIMESERIES AUTO SINCE 1 hour ago"
+                "accountId": 0,
+                "query": "SELECT count(*) FROM Log WHERE service = 'squid-proxy' FACET logtype TIMESERIES AUTO SINCE 1 hour ago"
               }
             ],
             "platformOptions": { "ignoreTimeRange": false }
@@ -209,8 +196,23 @@
             "facet": { "showOtherSeries": false },
             "nrqlQueries": [
               {
-                "accountIds": [],
+                "accountId": 0,
                 "query": "SELECT latest(proxy_host) AS 'Host', latest(proxy_port) AS 'Port', latest(cpu_time) AS 'CPU Time (s)', latest(wall_time) AS 'Wall Time (s)', latest(select_loops) AS 'Select Loops', latest(swap.outs) AS 'Swap Outs', latest(swap.ins) AS 'Swap Ins' FROM SquidCountersSample SINCE 30 minutes ago"
+              }
+            ],
+            "platformOptions": { "ignoreTimeRange": false }
+          }
+        },
+        {
+          "title": "Recent Proxy Access Logs",
+          "layout": { "column": 1, "row": 13, "width": 12, "height": 4 },
+          "visualization": { "id": "viz.table" },
+          "rawConfiguration": {
+            "facet": { "showOtherSeries": false },
+            "nrqlQueries": [
+              {
+                "accountId": 0,
+                "query": "SELECT timestamp, message FROM Log WHERE service = 'squid-proxy' AND logtype = 'squid_access' SINCE 30 minutes ago LIMIT 200"
               }
             ],
             "platformOptions": { "ignoreTimeRange": false }
