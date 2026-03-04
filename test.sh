@@ -20,7 +20,7 @@ warn() { echo -e "  ${YELLOW}⚠ [WARN]${RESET} $1"; }
 step() { echo -e "\n${BOLD}${CYAN}▶ $1${RESET}"; }
 
 # Check root
-if [[ "$EUID" -ne 0 ]]; then
+if [ "$(id -u)" -ne 0 ]; then
     echo -e "${RED}ERROR: This script must be run as root (sudo).${RESET}"
     exit 1
 fi

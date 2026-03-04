@@ -11,7 +11,7 @@
 set -euo pipefail
 
 # Require root
-if [[ "$EUID" -ne 0 ]]; then
+if [ "$(id -u)" -ne 0 ]; then
     echo "ERROR: This script must be run as root (sudo)."
     exit 1
 fi

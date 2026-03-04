@@ -28,5 +28,9 @@ passwords
 # Ansible
 *.retry
 
+# Diagnostic archives
+newrelic-squid-diagnostic-*.tar.gz
+nr-squid-support-*.tar.gz
+
 # Temp vars file
 /tmp/nr-squid-vars.json
