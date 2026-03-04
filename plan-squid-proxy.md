@@ -439,6 +439,7 @@ ssl_bump_key_path: ""           # Path CA key di host sumber (sebelum copy)
 ssl_bump_cert_dest: "/etc/squid/ssl_cert/myCA.crt"
 ssl_bump_key_dest: "/etc/squid/ssl_cert/myCA.key"
 ssl_bump_db_path: "/var/lib/squid/ssl_db"
+squid_tls_min_version: "1.2"
 
 # ─── Basic Auth ────────────────────────────────
 basic_auth_enabled: false
@@ -474,6 +475,9 @@ newrelic_domains:
   - "identity-api.newrelic.com"
   - "infrastructure-command-api.newrelic.com"
   - "nr-downloads-main.s3.us-east-1.amazonaws.com"
+  - ".js-agent.newrelic.com"
+  - ".synthetics-horde.nr-data.net"
+  - ".synthetics-horde.eu01.nr-data.net"
 
 # ─── OS Repo Domains (agar installer NR bisa pull packages) ──
 os_repo_domains:
@@ -495,7 +499,6 @@ allowed_domains: "{{ newrelic_domains + os_repo_domains }}"
 
 # ─── New Relic Endpoints (untuk verification) ──
 newrelic_endpoints:
-  - "https://newrelic.com"
   - "https://collector.newrelic.com"
   - "https://aws-api.newrelic.com"
   - "https://cloud-collector.newrelic.com"

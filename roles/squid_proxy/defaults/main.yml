@@ -6,9 +6,13 @@ squid_localnet:
   - "172.16.0.0/12"
   - "192.168.0.0/16"
 
-# ─── SSL Bump ─────────────────────────────────
+# Jika set ke true, client butuh CA public key Anda untuk trust proxy.
 ssl_bump_enabled: false
-ssl_bump_port: 3129
+
+# ─── TLS / SSL Config (Outbound Only) ────────
+# NOTE: Mengatur minimum TLS untuk koneksi OUTBOUND dari Proxy menuju New Relic.
+# Sejak Feb 2023, New Relic mewajibkan minimum TLS 1.2 untuk inbound mereka.
+squid_tls_min_version: "1.2"
 ssl_bump_cert_path: ""
 ssl_bump_key_path: ""
 ssl_bump_cert_dest: "/etc/squid/ssl_cert/myCA.crt"
