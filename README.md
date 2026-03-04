@@ -4,29 +4,7 @@
 [![Ansible](https://img.shields.io/badge/Ansible-2.14+-black.svg?style=flat&logo=ansible)](https://www.ansible.com/)
 [![OS: Linux](https://img.shields.io/badge/OS-Linux-orange.svg?style=flat&logo=linux)](https://www.linux.org/)
 
-Automated installation and configuration of **Squid Proxy** to support New Relic POCs in environments requiring a forward proxy.
-
-## 💡 Motivation & Problem Statement
-
-Conducting a Proof of Concept (POC) for New Relic in strict enterprise environments often requires a **forward proxy** to allow agents to reach ingest endpoints.
-
-Manually setting up Squid Proxy is a repetitive and error-prone process involving:
-
-- Manual package installation and service management.
-- Complex configuration of SSL Bump (MITM) for TLS inspection.
-- Precise domain whitelisting for 30+ New Relic endpoints.
-- Vulnerability to configuration drift and lack of idempotency.
-
-**This project automates the entire lifecycle**—from OS detection to final endpoint verification—reducing a 30-minute manual task to a **one-liner command**.
-
-### 🚀 Efficiency Gain (Manual vs. Automated)
-
-| Feature | Manual Process | **Automated (This Repo)** |
-| :--- | :--- | :--- |
-| **Duration** | ~30 Minutes | **< 2 Minutes** |
-| **Consistency** | Human Error Prone | **100% Idempotent** |
-| **SSL Bump** | High Complexity | **Full Auto-Generation** |
-| **Verification** | Manual `curl` Tests | **Automated 32+ Checks** |
+Automated installation and configuration of **Squid Proxy** to support New Relic POCs. This project reduces repetitive manual setup tasks by automating the entire lifecycle—from OS detection to final endpoint verification—into a single command.
 
 ## ✨ Features
 
