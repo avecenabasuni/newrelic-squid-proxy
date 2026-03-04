@@ -30,7 +30,7 @@
     owner: root
     group: root
     mode: "0755"
-  tags: ['logging', 'newrelic']
+  tags: ['logging', 'monitoring', 'newrelic']
 
 - name: Deploy Squid log forwarding config for New Relic Infra Agent
   ansible.builtin.template:
@@ -40,4 +40,23 @@
     group: root
     mode: "0644"
   notify: Restart NR Infra Agent
-  tags: ['logging', 'newrelic']
+  tags: ['logging', 'monitoring', 'newrelic']
+
+- name: Ensure integrations.d directory exists
+  ansible.builtin.file:
+    path: /etc/newrelic-infra/integrations.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: ['metrics', 'monitoring', 'newrelic']
+
+- name: Deploy Squid metrics config for New Relic Flex
+  ansible.builtin.template:
+    src: squid-metrics-flex.yml.j2
+    dest: /etc/newrelic-infra/integrations.d/squid-metrics.yml
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart NR Infra Agent
+  tags: ['metrics', 'monitoring', 'newrelic']

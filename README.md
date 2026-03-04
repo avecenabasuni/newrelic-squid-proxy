@@ -70,6 +70,7 @@ Semua konfigurasi ditanyakan via prompt interaktif saat instalasi:
 | SSL Bump | `disabled` | Enable MITM interception (menyediakan CA cert eksisting atau generate auto-rotation) |
 | Basic Auth | `disabled` | Enable autentikasi proxy (butuh username & password) |
 | Cache Peer | `disabled` | Enable corporate proxy chaining (butuh host & port upstream proxy) |
+| NR Integration | `disabled` | Deploy Log forwarding & NRI-Flex Metrics monitor di NR Infra agent |
 
 ## Penggunaan Proxy
 
@@ -107,16 +108,18 @@ echo ".api.newrelic.com" >> /etc/squid/allowed_domains.txt
 squid -k reconfigure
 ```
 
-## Log Forwarding ke New Relic
+## New Relic Integration (Logs & Metrics)
 
-Untuk mengirim Squid logs ke New Relic Logs, enable saat instalasi atau set variabel:
+Untuk mengirim akses logs dan metrics cache Squid ke New Relic, enable saat ditanyakan pada `install.sh` atau set variabel Ansible:
 
 ```yaml
 # group_vars/all.yml atau extra-vars
-log_forwarding_enabled: true
+nr_integration_enabled: true
 ```
 
-Membutuhkan NR Infrastructure Agent terinstall di host yang sama. Config akan di-deploy ke `/etc/newrelic-infra/logging.d/squid.yml`.
+Membutuhkan NR Infrastructure Agent terinstall di host yang sama. Script otomatis men-deploy konfigurasi:
+1. Log forwarding (`/etc/newrelic-infra/logging.d/squid.yml`)
+2. Metrik Flex integration (`/etc/newrelic-infra/integrations.d/squid-metrics.yml`)
 
 ## Uninstall
 

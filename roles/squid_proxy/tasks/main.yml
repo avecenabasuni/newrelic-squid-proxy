@@ -25,9 +25,9 @@
   ansible.builtin.import_tasks: auth.yml
   when: basic_auth_enabled | bool
 
-- name: Setup Log Forwarding to New Relic
-  ansible.builtin.import_tasks: log_forwarding.yml
-  when: log_forwarding_enabled | d(false) | bool
+- name: Setup New Relic Integration (Logs & Metrics)
+  ansible.builtin.import_tasks: monitoring.yml
+  when: nr_integration_enabled | d(false) | bool
 
 - name: Manage Squid service
   ansible.builtin.import_tasks: service.yml

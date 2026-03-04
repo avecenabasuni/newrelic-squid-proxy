@@ -64,10 +64,10 @@ Roadmap fitur untuk membuat `newrelic-squid-proxy` menjadi lebih robust dan ente
   - Summary akhir install hanya tampilkan `export https_proxy=...`. SE harus cari sendiri cara set proxy di tiap agent NR.
   - Solusi: Generate dan tampilkan ready-to-copy config snippets untuk NR Infra Agent (`newrelic-infra.yml`), Java APM (`-D` JVM args), Python APM (`newrelic.ini`), Node.js (`env`), .NET (`newrelic.config`).
   - Effort: Low | Value: High
-- [ ] **N4: Squid Metrics Monitoring via NR Flex Integration**
-  - Expose internal Squid metrics (request rate, cache hit ratio, active connections, memory usage, DNS latency) ke New Relic sebagai custom metrics.
-  - Pendekatan: Menggunakan `squidclient mgr:info` (bawaan Squid, tanpa perlu SNMP compile flag) yang di-scrape oleh **NR Infra Agent Flex Integration**.
-  - File output: `nri-flex` config YAML yang di-deploy ke `/etc/newrelic-infra/integrations.d/squid-flex.yml`
+- [x] **N4: Squid Metrics Monitoring via NR Flex Integration**
+  - Standard Infra agent tidak pull custom metrics dari Squid secara native kecuali via Prometheus/JMX, tapi Squid punya cache manager default.
+  - Solusi: Deploy custom `nri-flex` config (`squid-metrics-flex.yml`) jika `nr_integration_enabled=true` yang menjalankan HTTP GET polling ke `/squid-internal-mgr/counters` dan memecahnya menjadi Metrics di New Relic.
+  - Effort: Medium | Value: High
   - Metrics yang di-expose:
     - `squid.requests_per_second` - Request rate
     - `squid.cache_hit_ratio` - Percentage of requests served from cache

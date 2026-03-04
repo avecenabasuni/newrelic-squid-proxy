@@ -49,8 +49,17 @@ http_access deny CONNECT !SSL_ports
 http_access deny to_localhost
 http_access deny to_linklocal
 
+###########################################################
+# [4] MANAGER/METRICS ACCESS (Untuk New Relic monitoring) #
+###########################################################
+
+# Izinkan akses manager (metrics) dari localhost
+acl manager url_regex -i ^cache_object:// /squid-internal-mgr/
+http_access allow manager localhost
+http_access deny manager
+
 ##############################################
-# [4] KEBIJAKAN AKSES (URUTAN PENTING/FINAL) #
+# [5] KEBIJAKAN AKSES (URUTAN PENTING/FINAL) #
 ##############################################
 
 {% if basic_auth_enabled | bool %}
@@ -78,7 +87,7 @@ http_access allow localnet allowed_domains
 http_access deny all
 
 #####################
-# [5] LISTENING PORT
+# [6] LISTENING PORT
 #####################
 
 http_port {{ squid_port }}

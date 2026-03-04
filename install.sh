@@ -318,6 +318,7 @@ BASIC_AUTH_PASSWORD=""
 CACHE_PEER_ENABLED="false"
 CACHE_PEER_HOST=""
 CACHE_PEER_PORT=""
+NR_INTEGRATION_ENABLED="false"
 
 echo ""
 echo -e "  ${GRAY}Answer the following prompts to configure your proxy.${RESET}"
@@ -420,6 +421,15 @@ if [[ "$CACHE_PEER_INPUT" =~ ^[Yy]$ ]]; then
     CACHE_PEER_PORT="${CACHE_PEER_PORT:-8080}"
 fi
 
+echo ""
+echo -e "  ${GRAY}  ${DIM}Exports Squid access logs & metrics to New Relic (Requires Infrastructure agent installed).${RESET}"
+prompt "${BOLD}Enable New Relic Integration (Logs & Metrics)?${RESET} ${GRAY}[y/N]${RESET}: "
+read -r NR_INTEGRATION_INPUT < /dev/tty
+
+if [[ "$NR_INTEGRATION_INPUT" =~ ^[Yy]$ ]]; then
+    NR_INTEGRATION_ENABLED="true"
+fi
+
 # ─── Confirmation Summary ────────────────────────────────────────────────────
 echo ""
 separator
@@ -454,9 +464,17 @@ else
     echo -e "  ${DOT}  Cache Peer      ${DIM}disabled${RESET}"
 fi
 
+if [ "$NR_INTEGRATION_ENABLED" = "true" ]; then
+    echo -e "  ${DOT}  NR Integration  ${GREEN}${BOLD}ENABLED${RESET} ${GRAY}Logs & Metrics${RESET}"
+else
+    echo -e "  ${DOT}  NR Integration  ${DIM}disabled${RESET}"
+fi
+
 echo ""
 separator
 echo ""
+
+echo -e "  ${ARROW} Generating Ansible variable files..."
 PROCEED=""
 prompt "${BOLD}Proceed with installation?${RESET} ${GRAY}[Y/n]${RESET}: "
 read -r PROCEED < /dev/tty
@@ -500,6 +518,7 @@ cat <<EOF > /tmp/nr-squid-vars.json
   "cache_peer_enabled": ${CACHE_PEER_ENABLED},
   "cache_peer_host": "${CACHE_PEER_HOST}",
   "cache_peer_port": "${CACHE_PEER_PORT}",
+  "nr_integration_enabled": ${NR_INTEGRATION_ENABLED},
   "squid_selinux_enabled": ${SQUID_SELINUX_ENABLED}
 }
 EOF

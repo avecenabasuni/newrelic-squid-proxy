@@ -47,7 +47,7 @@ squid_forwarded_for: "off"
 
 # ─── Log Forwarding (M2) ───────────────────────────────────────────
 # Set ke true untuk forward squid logs ke New Relic Logs via NR Infra Agent
-log_forwarding_enabled: false
+nr_integration_enabled: false
 
 # ─── SELinux ───────────────────────────────────────────────────────
 # Akan di-override oleh install.sh berdasarkan output getenforce

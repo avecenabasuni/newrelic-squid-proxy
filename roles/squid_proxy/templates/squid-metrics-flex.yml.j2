@@ -1,0 +1,34 @@
+---
+# /etc/newrelic-infra/integrations.d/squid-metrics.yml
+# Managed by Ansible - New Relic Squid Proxy (N4 Feature)
+#
+# Generates metrics from Squid's built-in Cache Manager
+# using the New Relic Infrastructure Flex Integration.
+
+integrations:
+  - name: nri-flex
+    interval: 30s
+    config:
+      name: SquidProxyMetrics
+      apis:
+        - name: SquidCounters
+          url: "http://localhost:{{ squid_port }}/squid-internal-mgr/counters"
+          method: GET
+          sample_name: SquidCounterSample
+          custom_attributes:
+            proxy_port: "{{ squid_port }}"
+            proxy_host: "{{ ansible_fqdn | default(ansible_hostname) }}"
+          split: line
+          split_by: "="
+          set_header: ["metric_name", "metric_value"]
+
+        - name: SquidInfo
+          url: "http://localhost:{{ squid_port }}/squid-internal-mgr/info"
+          method: GET
+          sample_name: SquidInfoSample
+          custom_attributes:
+            proxy_port: "{{ squid_port }}"
+            proxy_host: "{{ ansible_fqdn | default(ansible_hostname) }}"
+          split: line
+          split_by: ":"
+          set_header: ["info_key", "info_value"]
