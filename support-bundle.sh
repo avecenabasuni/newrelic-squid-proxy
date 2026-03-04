@@ -99,7 +99,7 @@ echo "Connectivity Test from proxy host to NR Endpoints" > "$BUNDLE_DIR/nr-conne
 echo "------------------------------------------------" >> "$BUNDLE_DIR/nr-connectivity.txt"
 
 SQUID_PORT=$(grep -E '^http_port ' /etc/squid/squid.conf 2>/dev/null | awk '{print $2}' || echo "3128")
-PROXY_ARG="-x http://localhost:${SQUID_PORT}"
+PROXY_ARG=("-x" "http://localhost:${SQUID_PORT}")
 
 # Test without proxy (direct)
 echo "1. DIRECT INTERNET ACCESS (No Proxy)" >> "$BUNDLE_DIR/nr-connectivity.txt"
@@ -108,7 +108,7 @@ echo -e "\n" >> "$BUNDLE_DIR/nr-connectivity.txt"
 
 # Test via Squid local
 echo "2. VIA LOCAL SQUID PROXY (Port ${SQUID_PORT})" >> "$BUNDLE_DIR/nr-connectivity.txt"
-curl "$PROXY_ARG" -s -o /dev/null -w "%{http_code}" https://infra-api.newrelic.com --connect-timeout 5 >> "$BUNDLE_DIR/nr-connectivity.txt" 2>&1 || echo "FAILED" >> "$BUNDLE_DIR/nr-connectivity.txt"
+curl "${PROXY_ARG[@]}" -s -o /dev/null -w "%{http_code}" https://infra-api.newrelic.com --connect-timeout 5 >> "$BUNDLE_DIR/nr-connectivity.txt" 2>&1 || echo "FAILED" >> "$BUNDLE_DIR/nr-connectivity.txt"
 echo -e "\n" >> "$BUNDLE_DIR/nr-connectivity.txt"
 
 # ─── 7. Archive & Cleanup ──────────────────────────────────────────────────

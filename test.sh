@@ -70,7 +70,7 @@ fi
 step "Phase 2: Squid Configuration & Runtime"
 
 SQUID_PORT=$(grep -E '^http_port ' /etc/squid/squid.conf 2>/dev/null | awk '{print $2}' || echo "3128")
-PROXY_ARG="-x http://localhost:${SQUID_PORT}"
+PROXY_ARG=("-x" "http://localhost:${SQUID_PORT}")
 
 if squid -k parse > /dev/null 2>&1; then
     pass "squid.conf syntax is valid"
@@ -95,7 +95,7 @@ step "Phase 3: E2E Connectivity (New Relic Endpoints)"
 
 # Test 1: Log API
 echo "  Testing connection to Log API (US)..."
-HTTP_CODE=$(curl "$PROXY_ARG" -s -o /dev/null -w "%{http_code}" https://log-api.newrelic.com --connect-timeout 5 || echo "000")
+HTTP_CODE=$(curl "${PROXY_ARG[@]}" -s -o /dev/null -w "%{http_code}" https://log-api.newrelic.com --connect-timeout 5 || echo "000")
 if [[ "$HTTP_CODE" == "202" || "$HTTP_CODE" == "403" || "$HTTP_CODE" == "200" || "$HTTP_CODE" == "404" ]]; then
     pass "Connection to US Log API established through proxy (HTTP $HTTP_CODE)"
 else
@@ -104,7 +104,7 @@ fi
 
 # Test 2: Blocked Domains
 echo "  Testing non-New Relic domain blocking..."
-HTTP_CODE_BLOCKED=$(curl "$PROXY_ARG" -s -o /dev/null -w "%{http_code}" https://www.google.com --connect-timeout 5 || echo "000")
+HTTP_CODE_BLOCKED=$(curl "${PROXY_ARG[@]}" -s -o /dev/null -w "%{http_code}" https://www.google.com --connect-timeout 5 || echo "000")
 if [[ "$HTTP_CODE_BLOCKED" == "403" ]]; then
     pass "Proxy correctly BLOCKS non-New Relic domains (google.com -> 403 Access Denied)"
 else
