@@ -5,8 +5,6 @@
 
 Feature roadmap to make `newrelic-squid-proxy` more robust and enterprise-ready, categorized by priority level for implementation planning.
 
----
-
 ## 🔴 High Priority
 *Critical for POC success, enterprise compatibility, and core tool reliability.*
 
@@ -28,8 +26,6 @@ Feature roadmap to make `newrelic-squid-proxy` more robust and enterprise-ready,
   - Automated tests across 6+ Linux distributions (Ubuntu, RHEL, openSUSE, etc.) on every PR.
 - [ ] **Upgrade-in-Place (B3-5)**
   - `install.sh --upgrade` to update the tool and endpoint list without losing current config.
-
----
 
 ## 🟡 Medium Priority
 *Enhances operational stability, observability, and open-source quality.*
@@ -63,8 +59,6 @@ Feature roadmap to make `newrelic-squid-proxy` more robust and enterprise-ready,
 - [ ] **Proxy Chain Pre-Validation (B3-4)**
   - Tests connectivity through the corporate proxy *before* finalizing the configuration.
 
----
-
 ## 🔵 Low Priority
 *Non-blocking features, performance baselining, and niche use cases.*
 
@@ -80,8 +74,6 @@ Feature roadmap to make `newrelic-squid-proxy` more robust and enterprise-ready,
   - HTTP `/healthz` for Load Balancers and NR Synthetics monitoring.
 - [ ] **Proxy Performance Baseline**
   - Record round-trip latency through the proxy post-install as a baseline.
-
----
 
 ## 🧬 Investigative / Dropped
 - [ ] **Transparent Proxying (TPROXY)**
