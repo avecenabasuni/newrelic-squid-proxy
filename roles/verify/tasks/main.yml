@@ -88,9 +88,21 @@
   register: blocked_result
   ignore_errors: true
 
+# For HTTPS URLs, Squid rejects at the CONNECT tunnel level.
+# Ansible uri module reports this as status -1 with "403 Forbidden" in the error message.
+# Both cases (direct 403 and tunnel-rejected 403) mean the block is working correctly.
 - name: Assert blocked domain is denied
+  ansible.builtin.set_fact:
+    blocked_domain_passed: >-
+      {{
+        (not blocked_result.failed)
+        or
+        (blocked_result.msg is defined and '403' in blocked_result.msg)
+      }}
+
+- name: Display blocked domain result
   ansible.builtin.debug:
-    msg: "{{ 'PASS: google.com correctly blocked (HTTP 403)' if not blocked_result.failed else 'WARNING: google.com was NOT blocked — check ACL configuration' }}"
+    msg: "{{ 'PASS: google.com correctly blocked (HTTP 403)' if blocked_domain_passed | bool else 'WARNING: google.com was NOT blocked — check ACL configuration' }}"
 
 - name: Test auth requirement (when enabled)
   ansible.builtin.uri:

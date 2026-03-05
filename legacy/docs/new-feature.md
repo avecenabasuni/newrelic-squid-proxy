@@ -1,9 +1,9 @@
 # Future Enhancements & New Features Roadmap
 
-> **Last updated**: March 4, 2026
+> **Last updated**: March 5, 2026
 > **Reference sources**: New Relic Network Docs & EOL Announcements
 
-Feature roadmap to make `newrelic-squid-proxy` more robust and enterprise-ready, ordered by priority and relevance for New Relic POC execution.
+Feature roadmap to make `newrelic-squid-proxy` more robust and enterprise-ready, ordered by priority and relevance for New Relic POC execution. Includes Batch 3 features targeting a mix of POC experience, production viability, and open-source portfolio quality.
 
 ---
 
@@ -100,6 +100,78 @@ Feature roadmap to make `newrelic-squid-proxy` more robust and enterprise-ready,
 - [ ] **N10: Proxy Performance Baseline**
   - Record round-trip latency through the proxy post-install as a baseline. Reference for future "proxy is slow" complaints.
   - Effort: Medium | Value: Low
+
+---
+
+## New Features (Brainstorm Batch 3)
+
+*Mixed-target batch: smoother POC experience, production viability, and open-source portfolio quality.*
+
+### POC Experience
+
+- [ ] **B3-1: Pre-flight System Check**
+  - Before running Ansible, validate: disk space (>500MB), DNS resolution works, no existing Squid conflicts, target port is not already in use, and outbound HTTPS is reachable (direct or via cache peer).
+  - Why: Catches the most common "why did it fail?" questions before they happen. Reduces back-and-forth with customers during setup.
+  - Effort: Low | Value: High
+
+- [ ] **B3-2: Config Profiles (Minimal / Standard / Full)**
+  - Pre-baked configuration presets that skip interactive prompts entirely: `--profile minimal` (port + region only), `--profile standard` (+ auth + firewall), `--profile full` (everything enabled).
+  - Why: Experienced SEs who run this tool weekly don't want to answer 6 prompts every time. New SEs still get the interactive flow by default.
+  - Effort: Medium | Value: High
+
+- [ ] **B3-3: SSL Bump CA Distribution Helper**
+  - After SSL Bump install with auto-generated CA, print ready-to-run commands for distributing the Root CA to client machines: `update-ca-trust` (RHEL), `update-ca-certificates` (Debian), Java `keytool`, and Python `certifi`.
+  - Why: SSL Bump is useless until clients trust the CA. This is always the follow-up question. Printing the commands saves a round of Googling.
+  - Effort: Low | Value: High
+
+- [ ] **B3-4: Proxy Chain Pre-Validation**
+  - When cache peer is enabled, test connectivity *through* the corporate proxy to at least one NR endpoint before writing `squid.conf`. Fail early with a clear error if the upstream proxy is unreachable or returns auth errors.
+  - Why: Currently the tool configures everything, then fails at verification. Testing the chain first saves 5 minutes of confusion.
+  - Effort: Low | Value: Medium
+
+### Production & Operations
+
+- [ ] **B3-5: Upgrade-in-Place (`install.sh --upgrade`)**
+  - Re-run the installer against an existing installation: pull latest repo, preserve current config (merge new defaults), and re-verify. No need to uninstall first.
+  - Why: When the endpoint list changes or a bug is fixed, users need a safe way to update without losing their config. Currently they have to uninstall and re-answer all prompts.
+  - Effort: Medium | Value: High
+
+- [ ] **B3-6: NR Alert on Verification Failure**
+  - If `nr_integration_enabled=true` and verification detects unreachable endpoints, send a custom event (`SquidVerifyFailed`) to New Relic via the Event API. Users can build NRQL alerts on it.
+  - Why: Combined with N8 (Scheduled Verify Cron), this turns the proxy into a self-monitoring system. NR endpoint changes get detected automatically instead of discovered when customers report missing data.
+  - Effort: Medium | Value: High
+
+- [ ] **B3-7: Log Rotation Configuration**
+  - Deploy `logrotate.d/squid` config with sensible defaults: 7-day retention, compress, daily rotation, `squid -k rotate` signal. Currently relies on distro defaults which vary widely.
+  - Why: On long-running deployments, unrotated `access.log` files grow to multiple GB and fill `/var/log`. This has caused disk-full outages.
+  - Effort: Low | Value: Medium
+
+- [ ] **B3-8: Endpoint Drift Detection**
+  - Maintain a checksum of the current NR endpoint list. On each `verify.yml` run, compare against the deployed `allowed_domains.txt`. If they differ, warn that the whitelist is outdated.
+  - Why: After an upgrade or manual edit, the deployed ACL may not match the latest known endpoints. This catches the gap silently.
+  - Effort: Low | Value: Medium
+
+### Portfolio & Open-Source Quality
+
+- [ ] **B3-9: GitHub Actions CI Matrix**
+  - Automated test pipeline running `install.sh --dry-run` across Docker containers for Ubuntu 22/24, Debian 12, Rocky 9, Alma 9, Fedora 40, and openSUSE Leap 15. Validates Ansible syntax and task execution on every push/PR.
+  - Why: Proves multi-distro support is tested, not just claimed. Adds credibility as an open-source project. Catches regressions early.
+  - Effort: High | Value: High
+
+- [ ] **B3-10: Ansible Galaxy Role Publishing**
+  - Restructure `roles/squid_proxy` to be installable via `ansible-galaxy install avecenabasuni.squid_proxy`. Add `meta/main.yml` with Galaxy metadata.
+  - Why: Makes the Ansible role discoverable and reusable independent of the installer script. Separate distribution channel from GitHub.
+  - Effort: Medium | Value: Medium
+
+- [ ] **B3-11: Dashboard Auto-Import via NerdGraph**
+  - Optional post-install step: provide an API key and account ID, and the tool imports `dashboard.json` into the user's NR account automatically via the NerdGraph API.
+  - Why: Currently users must manually import the dashboard JSON. Automating this removes the last manual step in the setup flow.
+  - Effort: Medium | Value: Medium
+
+- [ ] **B3-12: Contributing Guide & Issue Templates**
+  - Add `CONTRIBUTING.md`, `.github/ISSUE_TEMPLATE/bug_report.md`, `.github/ISSUE_TEMPLATE/feature_request.md`, and `.github/PULL_REQUEST_TEMPLATE.md`.
+  - Why: Standard open-source hygiene. Signals the project is maintained and welcoming to contributors. Low effort, high perception impact.
+  - Effort: Low | Value: Medium
 
 ---
 
