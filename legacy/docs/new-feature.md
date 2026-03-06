@@ -16,7 +16,7 @@ Feature roadmap to make `newrelic-squid-proxy` more robust and enterprise-ready,
   - Filters allowed domains and connectivity tests based on the selected New Relic region.
 - [x] **Uninstall Script**
   - `uninstall.sh` to cleanly remove all modifications with a single command.
-- [ ] **Pre-flight System Check (B3-1)**
+- [x] **Pre-flight System Check (B3-1)**
   - Validates disk space, DNS, port availability, and outbound reachability before starting.
 - [ ] **Config Profiles (B3-2)**
   - `--profile minimal/standard/full` to skip interactive prompts for repeat users.

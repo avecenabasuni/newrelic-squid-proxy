@@ -32,7 +32,7 @@ REPO_URL="${REPO_URL:-https://github.com/avecenabasuni/newrelic-squid-proxy.git}
 REPO_BRANCH="${REPO_BRANCH:-main}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/newrelic-squid-proxy}"
 VARS_FILE="/tmp/nr-squid-vars.json"
-TOTAL_STEPS=7
+TOTAL_STEPS=8
 
 # ─── ANSI Colors & Styles ────────────────────────────────────────────────────
 RED="\e[31m"
@@ -501,11 +501,68 @@ if [[ "$PROCEED" =~ ^[Nn]$ ]]; then
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# STEP 6: Run Ansible Playbooks
+# STEP 6: Pre-flight System Checks
+# ═══════════════════════════════════════════════════════════════════════════════
+step "Running pre-flight system checks"
+
+run_preflight_checks() {
+    local has_error=false
+
+    echo -e "  ${ARROW} Checking port availability ($SQUID_PORT)..."
+    if ss -tuln 2>/dev/null | grep -q ":$SQUID_PORT " || netstat -tuln 2>/dev/null | grep -q ":$SQUID_PORT "; then
+        log_error "Port $SQUID_PORT is already in use by another service."
+        has_error=true
+    else
+        log_info "Port $SQUID_PORT is available."
+    fi
+
+    echo -e "  ${ARROW} Checking free disk space (/var)..."
+    local free_space
+    if [ -d /var/log ]; then
+        free_space=$(df -Pm /var/log 2>/dev/null | awk 'NR==2 {print $4}')
+    else
+        free_space=$(df -Pm / 2>/dev/null | awk 'NR==2 {print $4}')
+    fi
+
+    if [ -n "$free_space" ] && [ "$free_space" -lt 1024 ]; then
+        log_error "Insufficient disk space. At least 1GB (1024MB) of free space is required."
+        has_error=true
+    else
+        log_info "Sufficient disk space available (${free_space}MB)."
+    fi
+
+    echo -e "  ${ARROW} Checking outbound connectivity..."
+    if [ "$CACHE_PEER_ENABLED" = "true" ]; then
+        if curl -sI --connect-timeout 5 "http://$CACHE_PEER_HOST:$CACHE_PEER_PORT" >/dev/null 2>&1; then
+            log_info "Cache peer $CACHE_PEER_HOST:$CACHE_PEER_PORT is reachable."
+        else
+            log_error "Cannot reach Cache Peer at $CACHE_PEER_HOST:$CACHE_PEER_PORT."
+            has_error=true
+        fi
+    else
+        if curl -sI --connect-timeout 5 https://google.com >/dev/null 2>&1 || curl -sI --connect-timeout 5 https://newrelic.com >/dev/null 2>&1; then
+            log_info "Outbound internet connectivity verified."
+        else
+            log_error "Cannot reach the internet. Please check DNS and outbound firewall rules."
+            has_error=true
+        fi
+    fi
+
+    if [ "$has_error" = "true" ]; then
+        echo ""
+        log_error "Pre-flight checks failed. Please resolve the issues above and try again."
+        exit 1
+    fi
+}
+
+run_preflight_checks
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# STEP 7: Run Ansible Playbooks
 # ═══════════════════════════════════════════════════════════════════════════════
 step "Installing & configuring Squid"
 
-# 6. Generate Ansible variables (JSON for extra-vars)
+# 7. Generate Ansible variables (JSON for extra-vars)
 echo -e "  ${ARROW} Generating configuration..."
 
 # Detect SELinux status (if default enforcing on RedHat)
@@ -559,7 +616,7 @@ echo ""
 log_info "Installation sequence complete"
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# STEP 7: Firewall Configuration (N2)
+# STEP 8: Firewall Configuration (N2)
 # ═══════════════════════════════════════════════════════════════════════════════
 FW_TOOL=""
 if command -v ufw &>/dev/null; then
@@ -597,7 +654,7 @@ if [ -n "$FW_TOOL" ] && [ "$DRY_RUN" != "true" ]; then
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# STEP 8: Verification
+# STEP 9: Verification
 # ═══════════════════════════════════════════════════════════════════════════════
 step "Running verification tests"
 
